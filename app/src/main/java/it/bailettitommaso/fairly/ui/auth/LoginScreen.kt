@@ -1,0 +1,160 @@
+package it.bailettitommaso.fairly.ui.auth
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.bailettitommaso.fairly.ui.theme.FairlyTheme
+
+@Composable
+fun LoginScreen(
+    onLoggedIn: () -> Unit,
+    viewModel: LoginViewModel = hiltViewModel(),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(state.loggedIn) {
+        if (state.loggedIn) onLoggedIn()
+    }
+
+    LoginContent(
+        state = state,
+        onEmailChange = viewModel::onEmailChange,
+        onPasswordChange = viewModel::onPasswordChange,
+        onSubmit = viewModel::submit,
+    )
+}
+
+@Composable
+private fun LoginContent(
+    state: LoginUiState,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+) {
+    Scaffold { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = "Fairly",
+                style = MaterialTheme.typography.headlineLarge,
+            )
+            Text(
+                text = "Sign in to continue",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
+            )
+
+            OutlinedTextField(
+                value = state.email,
+                onValueChange = onEmailChange,
+                label = { Text("Email") },
+                singleLine = true,
+                enabled = !state.isSubmitting,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            OutlinedTextField(
+                value = state.password,
+                onValueChange = onPasswordChange,
+                label = { Text("Password") },
+                singleLine = true,
+                enabled = !state.isSubmitting,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+            )
+
+            state.error?.let { error ->
+                Text(
+                    text = error.message(),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                )
+            }
+
+            Button(
+                onClick = onSubmit,
+                enabled = state.canSubmit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+            ) {
+                if (state.isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.padding(end = 8.dp),
+                        strokeWidth = 2.dp,
+                    )
+                }
+                Text("Sign in")
+            }
+        }
+    }
+}
+
+private fun LoginError.message(): String = when (this) {
+    LoginError.INVALID_CREDENTIALS -> "The provided credentials are incorrect."
+    LoginError.OFFLINE -> "No connection. Check your network and try again."
+    LoginError.GENERIC -> "Something went wrong. Please try again."
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginContentPreview() {
+    FairlyTheme {
+        LoginContent(
+            state = LoginUiState(email = "jane@example.com", password = "secret"),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onSubmit = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginContentErrorPreview() {
+    FairlyTheme {
+        LoginContent(
+            state = LoginUiState(
+                email = "jane@example.com",
+                password = "wrong",
+                error = LoginError.INVALID_CREDENTIALS,
+            ),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onSubmit = {},
+        )
+    }
+}
