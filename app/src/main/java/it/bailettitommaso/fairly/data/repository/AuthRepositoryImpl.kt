@@ -7,6 +7,7 @@ import it.bailettitommaso.fairly.data.remote.dto.toDomain
 import it.bailettitommaso.fairly.domain.repository.AuthRepository
 import it.bailettitommaso.fairly.domain.repository.LoginResult
 import retrofit2.HttpException
+import timber.log.Timber
 import java.io.IOException
 import javax.inject.Inject
 
@@ -18,14 +19,18 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val response = authApi.login(LoginRequestDto(email = email, password = password))
             tokenStore.save(response.token)
+            Timber.d("login: success")
             LoginResult.Success(response.user.toDomain())
         } catch (e: HttpException) {
             if (e.code() == HTTP_UNPROCESSABLE_ENTITY) {
+                Timber.d("login: invalid credentials")
                 LoginResult.InvalidCredentials
             } else {
+                Timber.d("login: server error %d", e.code())
                 LoginResult.Error
             }
         } catch (e: IOException) {
+            Timber.d(e, "login: network error, offline")
             LoginResult.Offline
         }
     }

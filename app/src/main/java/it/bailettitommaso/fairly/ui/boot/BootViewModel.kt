@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 sealed interface BootState {
@@ -32,16 +33,21 @@ class BootViewModel @Inject constructor(
     }
 
     /** Re-runs the boot session check (used by the offline screen on reconnect). */
-    fun retry() = check()
+    fun retry() {
+        Timber.d("boot: retry requested")
+        check()
+    }
 
     private fun check() {
         _state.value = BootState.Loading
         viewModelScope.launch {
-            _state.value = when (val result = sessionRepository.bootstrap()) {
+            val newState = when (val result = sessionRepository.bootstrap()) {
                 is SessionResult.Authenticated -> BootState.Authenticated(result.user)
                 SessionResult.Unauthenticated -> BootState.Unauthenticated
                 SessionResult.Offline -> BootState.Offline
             }
+            Timber.d("boot: resolved state=%s", newState::class.simpleName)
+            _state.value = newState
         }
     }
 }

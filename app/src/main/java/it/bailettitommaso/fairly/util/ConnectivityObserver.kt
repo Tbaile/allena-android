@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.callbackFlow
+import timber.log.Timber
 
 /** Emits connectivity changes so screens can react to the network coming back. */
 class ConnectivityObserver(context: Context) {
@@ -26,16 +27,20 @@ class ConnectivityObserver(context: Context) {
 
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
+                Timber.d("connectivity: available")
                 trySend(Status.AVAILABLE)
             }
 
             override fun onLost(network: Network) {
+                Timber.d("connectivity: lost")
                 trySend(Status.UNAVAILABLE)
             }
         }
 
         // Seed with the current state so collectors don't wait for the next change.
-        trySend(if (manager.hasInternet()) Status.AVAILABLE else Status.UNAVAILABLE)
+        val initial = if (manager.hasInternet()) Status.AVAILABLE else Status.UNAVAILABLE
+        Timber.d("connectivity: initial=%s", initial)
+        trySend(initial)
         manager.registerDefaultNetworkCallback(callback)
         awaitClose { manager.unregisterNetworkCallback(callback) }
     }.distinctUntilChanged()
