@@ -1,36 +1,33 @@
 package it.bailettitommaso.fairly
 
 import android.os.Bundle
-import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import it.bailettitommaso.fairly.ui.HomeScreen
+import dagger.hilt.android.AndroidEntryPoint
+import it.bailettitommaso.fairly.ui.boot.BootState
+import it.bailettitommaso.fairly.ui.boot.BootViewModel
+import it.bailettitommaso.fairly.ui.navigation.FairlyNavGraph
 import it.bailettitommaso.fairly.ui.theme.FairlyTheme
 
-private const val SPLASH_DURATION_MS = 5_000L
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val bootViewModel: BootViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        val startTime = SystemClock.elapsedRealtime()
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        // Hold the splash exactly until the boot session check resolves.
         splashScreen.setKeepOnScreenCondition {
-            SystemClock.elapsedRealtime() - startTime < SPLASH_DURATION_MS
+            bootViewModel.state.value is BootState.Loading
         }
         enableEdgeToEdge()
         setContent {
             FairlyTheme {
-                val navController = rememberNavController()
-                NavHost(navController = navController, startDestination = "home") {
-                    composable("home") {
-                        HomeScreen()
-                    }
-                }
+                FairlyNavGraph(bootViewModel = bootViewModel)
             }
         }
     }
