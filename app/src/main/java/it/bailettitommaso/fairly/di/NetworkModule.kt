@@ -4,6 +4,7 @@ import it.bailettitommaso.fairly.BuildConfig
 import it.bailettitommaso.fairly.data.local.TokenStore
 import it.bailettitommaso.fairly.data.remote.api.AuthApi
 import it.bailettitommaso.fairly.data.remote.api.MeApi
+import it.bailettitommaso.fairly.data.remote.interceptor.AcceptJsonInterceptor
 import it.bailettitommaso.fairly.data.remote.interceptor.BearerTokenInterceptor
 import dagger.Module
 import dagger.Provides
@@ -40,6 +41,7 @@ object NetworkModule {
         }
         return OkHttpClient.Builder()
             .addInterceptor(BearerTokenInterceptor(tokenStore))
+            .addInterceptor(AcceptJsonInterceptor())
             .addInterceptor(logging)
             .build()
     }
