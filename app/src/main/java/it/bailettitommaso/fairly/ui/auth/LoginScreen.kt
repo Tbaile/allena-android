@@ -11,10 +11,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -31,27 +34,42 @@ fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val sessionExpired by viewModel.sessionExpired.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(state.loggedIn) {
         if (state.loggedIn) onLoggedIn()
     }
 
+    LaunchedEffect(sessionExpired) {
+        if (sessionExpired) {
+            snackbarHostState.showSnackbar(SESSION_EXPIRED_MESSAGE)
+            viewModel.consumeSessionExpired()
+        }
+    }
+
     LoginContent(
         state = state,
+        snackbarHostState = snackbarHostState,
         onEmailChange = viewModel::onEmailChange,
         onPasswordChange = viewModel::onPasswordChange,
         onSubmit = viewModel::submit,
     )
 }
 
+private const val SESSION_EXPIRED_MESSAGE = "Your session has expired. Please sign in again."
+
 @Composable
 private fun LoginContent(
     state: LoginUiState,
+    snackbarHostState: SnackbarHostState,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onSubmit: () -> Unit,
 ) {
-    Scaffold { padding ->
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -135,6 +153,7 @@ private fun LoginContentPreview() {
     FairlyTheme {
         LoginContent(
             state = LoginUiState(email = "jane@example.com", password = "secret"),
+            snackbarHostState = remember { SnackbarHostState() },
             onEmailChange = {},
             onPasswordChange = {},
             onSubmit = {},
@@ -152,6 +171,7 @@ private fun LoginContentErrorPreview() {
                 password = "wrong",
                 error = LoginError.INVALID_CREDENTIALS,
             ),
+            snackbarHostState = remember { SnackbarHostState() },
             onEmailChange = {},
             onPasswordChange = {},
             onSubmit = {},

@@ -1,11 +1,15 @@
 package it.bailettitommaso.fairly.ui.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -50,8 +54,16 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
             }
             OfflineScreen(onRetry = bootViewModel::retry)
         }
-        composable<Route.Home> {
-            HomeScreen()
+        composable<Route.Home>(
+            enterTransition = {
+                if (initialState.destination.hasRoute<Route.Login>()) {
+                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Up, animationSpec = tween(400))
+                } else {
+                    fadeIn(tween(300))
+                }
+            },
+        ) {
+            HomeScreen(onLoggedOut = { navController.navigateReplacing(Route.Login) })
         }
     }
 }

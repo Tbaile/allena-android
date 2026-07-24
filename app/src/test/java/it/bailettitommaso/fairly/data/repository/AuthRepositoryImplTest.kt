@@ -65,6 +65,24 @@ class AuthRepositoryImplTest {
         assertEquals(LoginResult.Error, result)
     }
 
+    @Test
+    fun `logout clears token on success`() = runTest {
+        coEvery { authApi.logout() } returns Unit
+
+        repository.logout()
+
+        coVerify { tokenStore.clear() }
+    }
+
+    @Test
+    fun `logout clears token even when server call fails`() = runTest {
+        coEvery { authApi.logout() } throws IOException("no network")
+
+        repository.logout()
+
+        coVerify { tokenStore.clear() }
+    }
+
     private fun http(code: Int): HttpException =
         HttpException(Response.error<Any>(code, "".toResponseBody("application/json".toMediaType())))
 }

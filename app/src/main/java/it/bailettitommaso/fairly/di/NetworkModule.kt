@@ -6,6 +6,8 @@ import it.bailettitommaso.fairly.data.remote.api.AuthApi
 import it.bailettitommaso.fairly.data.remote.api.MeApi
 import it.bailettitommaso.fairly.data.remote.interceptor.AcceptJsonInterceptor
 import it.bailettitommaso.fairly.data.remote.interceptor.BearerTokenInterceptor
+import it.bailettitommaso.fairly.data.remote.interceptor.UnauthorizedInterceptor
+import it.bailettitommaso.fairly.data.session.SessionManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,7 +33,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(tokenStore: TokenStore): OkHttpClient {
+    fun provideOkHttpClient(tokenStore: TokenStore, sessionManager: SessionManager): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.BODY
@@ -42,6 +44,7 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .addInterceptor(BearerTokenInterceptor(tokenStore))
             .addInterceptor(AcceptJsonInterceptor())
+            .addInterceptor(UnauthorizedInterceptor(sessionManager))
             .addInterceptor(logging)
             .build()
     }

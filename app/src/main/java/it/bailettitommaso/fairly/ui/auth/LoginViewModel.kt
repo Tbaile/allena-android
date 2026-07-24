@@ -3,6 +3,7 @@ package it.bailettitommaso.fairly.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.bailettitommaso.fairly.data.session.SessionManager
 import it.bailettitommaso.fairly.domain.repository.AuthRepository
 import it.bailettitommaso.fairly.domain.repository.LoginResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,10 +29,16 @@ data class LoginUiState(
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val sessionManager: SessionManager,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginUiState())
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
+
+    /** Sticky flag mirrored from [SessionManager]; the screen flashes and then [consumeSessionExpired]s. */
+    val sessionExpired: StateFlow<Boolean> = sessionManager.sessionExpired
+
+    fun consumeSessionExpired() = sessionManager.consumeSessionExpired()
 
     fun onEmailChange(value: String) = _state.update { it.copy(email = value, error = null) }
 
@@ -45,7 +52,10 @@ class LoginViewModel @Inject constructor(
             val result = authRepository.login(current.email.trim(), current.password)
             _state.update {
                 when (result) {
-                    is LoginResult.Success -> it.copy(isSubmitting = false, loggedIn = true)
+                    is LoginResult.Success -> {
+                        sessionManager.markAuthenticated()
+                        it.copy(isSubmitting = false, loggedIn = true)
+                    }
                     LoginResult.InvalidCredentials ->
                         it.copy(isSubmitting = false, error = LoginError.INVALID_CREDENTIALS)
                     LoginResult.Offline ->
