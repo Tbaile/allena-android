@@ -19,4 +19,7 @@ sealed interface LoginResult {
 interface AuthRepository {
     /** Authenticates with email/password and, on success, persists the bearer token. */
     suspend fun login(email: String, password: String): LoginResult
+
+    /** Revokes the token server-side and clears it locally. Local state is cleared regardless of server outcome. */
+    suspend fun logout()
 }

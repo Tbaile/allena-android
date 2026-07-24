@@ -35,6 +35,16 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun logout() {
+        try {
+            authApi.logout()
+        } catch (e: Exception) {
+            Timber.d(e, "logout: server call failed, clearing local session anyway")
+        } finally {
+            tokenStore.clear()
+        }
+    }
+
     private companion object {
         const val HTTP_UNPROCESSABLE_ENTITY = 422
     }
