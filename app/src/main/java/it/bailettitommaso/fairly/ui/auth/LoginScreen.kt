@@ -6,10 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -26,6 +23,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.bailettitommaso.fairly.ui.components.ErrorText
+import it.bailettitommaso.fairly.ui.components.FairlyButton
+import it.bailettitommaso.fairly.ui.components.FairlyTextField
 import it.bailettitommaso.fairly.ui.theme.FairlyTheme
 
 @Composable
@@ -88,21 +88,19 @@ private fun LoginContent(
                 modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
             )
 
-            OutlinedTextField(
+            FairlyTextField(
                 value = state.email,
                 onValueChange = onEmailChange,
-                label = { Text("Email") },
-                singleLine = true,
+                label = "Email",
                 enabled = !state.isSubmitting,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            OutlinedTextField(
+            FairlyTextField(
                 value = state.password,
                 onValueChange = onPasswordChange,
-                label = { Text("Password") },
-                singleLine = true,
+                label = "Password",
                 enabled = !state.isSubmitting,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -112,31 +110,23 @@ private fun LoginContent(
             )
 
             state.error?.let { error ->
-                Text(
-                    text = error.message(),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
+                ErrorText(
+                    message = error.message(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
                 )
             }
 
-            Button(
+            FairlyButton(
+                text = "Sign in",
                 onClick = onSubmit,
                 enabled = state.canSubmit,
+                loading = state.isSubmitting,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 24.dp),
-            ) {
-                if (state.isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.padding(end = 8.dp),
-                        strokeWidth = 2.dp,
-                    )
-                }
-                Text("Sign in")
-            }
+            )
         }
     }
 }
