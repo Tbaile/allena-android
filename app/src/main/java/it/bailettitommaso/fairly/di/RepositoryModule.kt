@@ -5,8 +5,10 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import it.bailettitommaso.fairly.data.repository.AuthRepositoryImpl
+import it.bailettitommaso.fairly.data.repository.ExerciseRepositoryImpl
 import it.bailettitommaso.fairly.data.repository.SessionRepositoryImpl
 import it.bailettitommaso.fairly.domain.repository.AuthRepository
+import it.bailettitommaso.fairly.domain.repository.ExerciseRepository
 import it.bailettitommaso.fairly.domain.repository.SessionRepository
 import javax.inject.Singleton
 
@@ -21,4 +23,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSessionRepository(impl: SessionRepositoryImpl): SessionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindExerciseRepository(impl: ExerciseRepositoryImpl): ExerciseRepository
 }

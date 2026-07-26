@@ -3,6 +3,7 @@ package it.bailettitommaso.fairly.di
 import it.bailettitommaso.fairly.BuildConfig
 import it.bailettitommaso.fairly.data.local.TokenStore
 import it.bailettitommaso.fairly.data.remote.api.AuthApi
+import it.bailettitommaso.fairly.data.remote.api.ExerciseApi
 import it.bailettitommaso.fairly.data.remote.api.MeApi
 import it.bailettitommaso.fairly.data.remote.interceptor.AcceptJsonInterceptor
 import it.bailettitommaso.fairly.data.remote.interceptor.BearerTokenInterceptor
@@ -67,4 +68,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideMeApi(retrofit: Retrofit): MeApi = retrofit.create(MeApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideExerciseApi(retrofit: Retrofit): ExerciseApi = retrofit.create(ExerciseApi::class.java)
 }
