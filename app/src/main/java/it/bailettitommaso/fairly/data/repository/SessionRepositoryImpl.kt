@@ -24,7 +24,7 @@ class SessionRepositoryImpl @Inject constructor(
 
         return try {
             val user = meApi.me().data.toDomain()
-            Timber.d("bootstrap: authenticated as role=%s", user.role)
+            Timber.d("bootstrap: authenticated")
             SessionResult.Authenticated(user)
         } catch (e: HttpException) {
             if (e.code() == HTTP_UNAUTHORIZED) {

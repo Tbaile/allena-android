@@ -3,6 +3,7 @@ package it.bailettitommaso.fairly.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.bailettitommaso.fairly.data.session.CurrentUserStore
 import it.bailettitommaso.fairly.data.session.SessionManager
 import it.bailettitommaso.fairly.domain.repository.AuthRepository
 import it.bailettitommaso.fairly.domain.repository.LoginResult
@@ -21,6 +22,7 @@ data class LoginUiState(
     val isSubmitting: Boolean = false,
     val error: LoginError? = null,
     val loggedIn: Boolean = false,
+    val mustChangePassword: Boolean = false,
 ) {
     val canSubmit: Boolean
         get() = !isSubmitting && email.isNotBlank() && password.isNotBlank()
@@ -30,6 +32,7 @@ data class LoginUiState(
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val sessionManager: SessionManager,
+    private val currentUserStore: CurrentUserStore,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginUiState())
@@ -49,20 +52,25 @@ class LoginViewModel @Inject constructor(
         if (!current.canSubmit) return
         _state.update { it.copy(isSubmitting = true, error = null) }
         viewModelScope.launch {
-            val result = authRepository.login(current.email.trim(), current.password)
-            _state.update {
-                when (result) {
-                    is LoginResult.Success -> {
-                        sessionManager.markAuthenticated()
-                        it.copy(isSubmitting = false, loggedIn = true)
+            when (val result = authRepository.login(current.email.trim(), current.password)) {
+                is LoginResult.Success -> {
+                    sessionManager.markAuthenticated()
+                    // The login response omits must_change_password; /me is the source of truth.
+                    val user = currentUserStore.refresh() ?: result.user
+                    _state.update {
+                        it.copy(
+                            isSubmitting = false,
+                            loggedIn = true,
+                            mustChangePassword = user.mustChangePassword,
+                        )
                     }
-                    LoginResult.InvalidCredentials ->
-                        it.copy(isSubmitting = false, error = LoginError.INVALID_CREDENTIALS)
-                    LoginResult.Offline ->
-                        it.copy(isSubmitting = false, error = LoginError.OFFLINE)
-                    LoginResult.Error ->
-                        it.copy(isSubmitting = false, error = LoginError.GENERIC)
                 }
+                LoginResult.InvalidCredentials ->
+                    _state.update { it.copy(isSubmitting = false, error = LoginError.INVALID_CREDENTIALS) }
+                LoginResult.Offline ->
+                    _state.update { it.copy(isSubmitting = false, error = LoginError.OFFLINE) }
+                LoginResult.Error ->
+                    _state.update { it.copy(isSubmitting = false, error = LoginError.GENERIC) }
             }
         }
     }

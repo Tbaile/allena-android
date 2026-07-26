@@ -1,13 +1,9 @@
 package it.bailettitommaso.fairly.ui
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,10 +14,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.bailettitommaso.fairly.ui.components.FairlyButton
+import it.bailettitommaso.fairly.ui.components.PlaceholderScreen
+import it.bailettitommaso.fairly.ui.me.ProfileViewModel
 import it.bailettitommaso.fairly.ui.theme.FairlyTheme
 
+/** Authenticated landing for every role: a placeholder plus a logout action. */
 @Composable
-fun HomeScreen(onLoggedOut: () -> Unit, viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(onLoggedOut: () -> Unit, viewModel: ProfileViewModel = hiltViewModel()) {
     val loggedOut by viewModel.loggedOut.collectAsStateWithLifecycle()
 
     LaunchedEffect(loggedOut) {
@@ -33,24 +32,16 @@ fun HomeScreen(onLoggedOut: () -> Unit, viewModel: HomeViewModel = hiltViewModel
 
 @Composable
 private fun HomeContent(onLogout: () -> Unit) {
-    Scaffold { paddingValues ->
-        Box(
+    Box(Modifier.fillMaxSize()) {
+        PlaceholderScreen(title = "Fairly", subtitle = "Coming soon")
+        FairlyButton(
+            text = "Log out",
+            onClick = onLogout,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = "Hello, Fairly!",
-                    style = MaterialTheme.typography.headlineMedium,
-                )
-                FairlyButton(text = "Log out", onClick = onLogout)
-            }
-        }
+                .align(Alignment.BottomCenter)
+                .padding(24.dp)
+                .fillMaxWidth()
+        )
     }
 }
 

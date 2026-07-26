@@ -30,7 +30,7 @@ import it.bailettitommaso.fairly.ui.theme.FairlyTheme
 
 @Composable
 fun LoginScreen(
-    onLoggedIn: () -> Unit,
+    onLoggedIn: (mustChangePassword: Boolean) -> Unit,
     viewModel: LoginViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -38,7 +38,7 @@ fun LoginScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(state.loggedIn) {
-        if (state.loggedIn) onLoggedIn()
+        if (state.loggedIn) onLoggedIn(state.mustChangePassword)
     }
 
     LaunchedEffect(sessionExpired) {

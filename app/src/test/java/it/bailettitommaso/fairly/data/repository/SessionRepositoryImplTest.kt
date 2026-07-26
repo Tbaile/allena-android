@@ -7,7 +7,6 @@ import it.bailettitommaso.fairly.data.local.TokenStore
 import it.bailettitommaso.fairly.data.remote.api.MeApi
 import it.bailettitommaso.fairly.data.remote.dto.MeDto
 import it.bailettitommaso.fairly.data.remote.dto.MeEnvelopeDto
-import it.bailettitommaso.fairly.domain.model.Role
 import it.bailettitommaso.fairly.domain.repository.SessionResult
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
@@ -45,7 +44,7 @@ class SessionRepositoryImplTest {
         val result = repository.bootstrap()
 
         assertTrue(result is SessionResult.Authenticated)
-        assertEquals(Role.EXPERT, (result as SessionResult.Authenticated).user.role)
+        assertEquals("Jane", (result as SessionResult.Authenticated).user.name)
     }
 
     @Test

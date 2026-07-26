@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import it.bailettitommaso.fairly.ui.HomeScreen
+import it.bailettitommaso.fairly.ui.auth.ChangePasswordScreen
 import it.bailettitommaso.fairly.ui.auth.LoginScreen
 import it.bailettitommaso.fairly.ui.boot.BootScreen
 import it.bailettitommaso.fairly.ui.boot.BootState
@@ -29,9 +30,11 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
 
     // The boot check owns the top-level routing decision.
     LaunchedEffect(bootState) {
-        when (bootState) {
+        when (val state = bootState) {
             BootState.Loading -> Unit
-            is BootState.Authenticated -> navController.navigateReplacing(Route.Home)
+            is BootState.Authenticated -> navController.navigateReplacing(
+                if (state.user.mustChangePassword) Route.ChangePassword else Route.Home,
+            )
             BootState.Unauthenticated -> navController.navigateReplacing(Route.Login)
             BootState.Offline -> navController.navigateReplacing(Route.Offline)
         }
@@ -42,7 +45,16 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
             BootScreen()
         }
         composable<Route.Login> {
-            LoginScreen(onLoggedIn = { navController.navigateReplacing(Route.Home) })
+            LoginScreen(
+                onLoggedIn = { mustChangePassword ->
+                    navController.navigateReplacing(
+                        if (mustChangePassword) Route.ChangePassword else Route.Home,
+                    )
+                },
+            )
+        }
+        composable<Route.ChangePassword> {
+            ChangePasswordScreen(onDone = { navController.navigateReplacing(Route.Home) })
         }
         composable<Route.Offline> {
             val connectivityViewModel: ConnectivityViewModel = hiltViewModel()

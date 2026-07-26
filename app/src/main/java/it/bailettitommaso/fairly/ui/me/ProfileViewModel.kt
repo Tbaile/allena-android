@@ -1,4 +1,4 @@
-package it.bailettitommaso.fairly.ui
+package it.bailettitommaso.fairly.ui.me
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
+class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val sessionManager: SessionManager,
 ) : ViewModel() {

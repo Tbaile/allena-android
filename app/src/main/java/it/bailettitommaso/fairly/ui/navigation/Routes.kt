@@ -14,5 +14,8 @@ sealed interface Route {
     data object Offline : Route
 
     @Serializable
+    data object ChangePassword : Route
+
+    @Serializable
     data object Home : Route
 }
