@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -56,8 +57,19 @@ private fun ProfileContent(
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (profile.isLoading) {
+            CircularProgressIndicator()
+        } else {
+            ProfileDetails(profile = profile, onLogout = onLogout)
+        }
+    }
+}
+
+@Composable
+private fun ProfileDetails(profile: ProfileUiState, onLogout: () -> Unit) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -151,7 +163,7 @@ private fun ProfileRow(label: String, value: String) {
 private fun ProfileContentPreview() {
     FairlyTheme {
         ProfileContent(
-            profile = ProfileUiState(name = "Mario", email = "mario.rossi@example.com"),
+            profile = ProfileUiState(isLoading = false, name = "Mario", email = "mario.rossi@example.com"),
             onLogout = {},
         )
     }
@@ -162,8 +174,16 @@ private fun ProfileContentPreview() {
 private fun ProfileContentDarkPreview() {
     FairlyTheme {
         ProfileContent(
-            profile = ProfileUiState(name = "Mario", email = "mario.rossi@example.com"),
+            profile = ProfileUiState(isLoading = false, name = "Mario", email = "mario.rossi@example.com"),
             onLogout = {},
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ProfileContentLoadingPreview() {
+    FairlyTheme {
+        ProfileContent(profile = ProfileUiState(isLoading = true), onLogout = {})
     }
 }

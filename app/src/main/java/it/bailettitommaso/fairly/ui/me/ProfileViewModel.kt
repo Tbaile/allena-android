@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ProfileUiState(
+    val isLoading: Boolean = true,
     val name: String = "",
     val email: String = "",
 )
@@ -32,8 +33,11 @@ class ProfileViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            currentUserStore.refresh()?.let { user ->
-                _profile.value = ProfileUiState(name = user.name, email = user.email)
+            val user = currentUserStore.refresh()
+            _profile.value = if (user != null) {
+                ProfileUiState(isLoading = false, name = user.name, email = user.email)
+            } else {
+                _profile.value.copy(isLoading = false)
             }
         }
     }
