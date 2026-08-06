@@ -1,13 +1,9 @@
 package it.bailettitommaso.fairly.domain.repository
 
+import androidx.paging.PagingData
 import it.bailettitommaso.fairly.domain.model.Category
 import it.bailettitommaso.fairly.domain.model.Exercise
-
-sealed interface ExercisesResult {
-    data class Success(val exercises: List<Exercise>) : ExercisesResult
-    data object Offline : ExercisesResult
-    data object Error : ExercisesResult
-}
+import kotlinx.coroutines.flow.Flow
 
 sealed interface CategoriesResult {
     data class Success(val categories: List<Category>) : CategoriesResult
@@ -16,6 +12,6 @@ sealed interface CategoriesResult {
 }
 
 interface ExerciseRepository {
-    suspend fun list(search: String?, categorySlug: String?): ExercisesResult
+    fun list(search: String?, categorySlug: String?): Flow<PagingData<Exercise>>
     suspend fun categories(): CategoriesResult
 }

@@ -1,10 +1,15 @@
 package it.bailettitommaso.fairly.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import it.bailettitommaso.fairly.data.paging.ExercisePagingSource
 import it.bailettitommaso.fairly.data.remote.api.ExerciseApi
 import it.bailettitommaso.fairly.data.remote.dto.toDomain
+import it.bailettitommaso.fairly.domain.model.Exercise
 import it.bailettitommaso.fairly.domain.repository.CategoriesResult
 import it.bailettitommaso.fairly.domain.repository.ExerciseRepository
-import it.bailettitommaso.fairly.domain.repository.ExercisesResult
+import kotlinx.coroutines.flow.Flow
 import retrofit2.HttpException
 import timber.log.Timber
 import java.io.IOException
@@ -13,21 +18,12 @@ import javax.inject.Inject
 class ExerciseRepositoryImpl @Inject constructor(
     private val exerciseApi: ExerciseApi,
 ) : ExerciseRepository {
-    override suspend fun list(search: String?, categorySlug: String?): ExercisesResult {
-        return try {
-            val response = exerciseApi.list(
-                search = search?.takeIf { it.isNotBlank() },
-                categorySlug = categorySlug,
-                perPage = MAX_PER_PAGE,
-            )
-            ExercisesResult.Success(response.data.map { it.toDomain() })
-        } catch (e: HttpException) {
-            Timber.d("exercises: server error %d", e.code())
-            ExercisesResult.Error
-        } catch (e: IOException) {
-            Timber.d(e, "exercises: network error, offline")
-            ExercisesResult.Offline
-        }
+    override fun list(search: String?, categorySlug: String?): Flow<PagingData<Exercise>> {
+        val trimmedSearch = search?.takeIf { it.isNotBlank() }
+        return Pager(
+            config = PagingConfig(pageSize = PAGE_SIZE, enablePlaceholders = false),
+            pagingSourceFactory = { ExercisePagingSource(exerciseApi, trimmedSearch, categorySlug) },
+        ).flow
     }
 
     override suspend fun categories(): CategoriesResult {
@@ -44,6 +40,6 @@ class ExerciseRepositoryImpl @Inject constructor(
     }
 
     private companion object {
-        const val MAX_PER_PAGE = 100
+        const val PAGE_SIZE = 20
     }
 }

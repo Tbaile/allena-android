@@ -8,9 +8,9 @@ import retrofit2.http.Query
 interface ExerciseApi {
     @GET("exercises")
     suspend fun list(
-        @Query("search") search: String? = null,
-        @Query("category") categorySlug: String? = null,
-        @Query("per_page") perPage: Int? = null,
+        @Query("filter[search]") search: String? = null,
+        @Query("filter[category]") categorySlug: String? = null,
+        @Query("page") page: Int,
     ): ExerciseListEnvelopeDto
 
     @GET("categories")
