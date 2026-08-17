@@ -45,6 +45,9 @@ class ConnectivityObserver(context: Context) {
         awaitClose { manager.unregisterNetworkCallback(callback) }
     }.distinctUntilChanged()
 
+    /** Point-in-time check, for callers that can't collect [status]. */
+    fun isOnline(): Boolean = connectivityManager?.hasInternet() == true
+
     private fun ConnectivityManager.hasInternet(): Boolean {
         val caps = getNetworkCapabilities(activeNetwork) ?: return false
         return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)

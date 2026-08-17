@@ -10,8 +10,10 @@ sealed interface SessionResult {
     /** No token stored, or the token was rejected (401) and has been cleared. */
     data object Unauthenticated : SessionResult
 
-    /** Could not reach the backend (no connectivity / transient network error). */
-    data object Offline : SessionResult
+    /** Could not reach the backend. [cause] separates a dead network from a dead/erroring server. */
+    data class Unreachable(val cause: Cause) : SessionResult {
+        enum class Cause { NETWORK, SERVER }
+    }
 }
 
 interface SessionRepository {

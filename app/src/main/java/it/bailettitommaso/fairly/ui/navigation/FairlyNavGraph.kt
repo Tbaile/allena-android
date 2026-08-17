@@ -20,9 +20,9 @@ import it.bailettitommaso.fairly.ui.auth.LoginScreen
 import it.bailettitommaso.fairly.ui.boot.BootScreen
 import it.bailettitommaso.fairly.ui.boot.BootState
 import it.bailettitommaso.fairly.ui.boot.BootViewModel
+import it.bailettitommaso.fairly.domain.repository.SessionResult
 import it.bailettitommaso.fairly.ui.offline.ConnectivityViewModel
 import it.bailettitommaso.fairly.ui.offline.OfflineScreen
-import it.bailettitommaso.fairly.util.ConnectivityObserver
 
 @Composable
 fun FairlyNavGraph(bootViewModel: BootViewModel) {
@@ -37,7 +37,7 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
                 if (state.user.mustChangePassword) Route.ChangePassword(forced = true) else Route.Home,
             )
             BootState.Unauthenticated -> navController.navigateReplacing(Route.Login)
-            BootState.Offline -> navController.navigateReplacing(Route.Offline)
+            is BootState.Unreachable -> navController.navigateReplacing(Route.Offline)
         }
     }
 
@@ -69,13 +69,16 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
         }
         composable<Route.Offline> {
             val connectivityViewModel: ConnectivityViewModel = hiltViewModel()
-            val status by connectivityViewModel.status.collectAsStateWithLifecycle()
-            LaunchedEffect(status) {
-                if (status == ConnectivityObserver.Status.AVAILABLE) {
-                    bootViewModel.retry()
-                }
+            LaunchedEffect(Unit) {
+                connectivityViewModel.reconnected.collect { bootViewModel.retry() }
             }
-            OfflineScreen(onRetry = bootViewModel::retry)
+            val retrying by bootViewModel.retrying.collectAsStateWithLifecycle()
+            OfflineScreen(
+                cause = (bootState as? BootState.Unreachable)?.cause
+                    ?: SessionResult.Unreachable.Cause.NETWORK,
+                retrying = retrying,
+                onRetry = bootViewModel::retry,
+            )
         }
         composable<Route.Home>(
             enterTransition = {
@@ -94,8 +97,13 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
     }
 }
 
-/** Navigates to a top-level destination, clearing the back stack (these screens are mutually exclusive). */
+/**
+ * Navigates to a top-level destination, clearing the back stack (these screens are mutually
+ * exclusive). Bails out when already there: `popUpTo(inclusive)` destroys and rebuilds the current
+ * entry, so without this guard a repeated state resolution recreates the screen and its ViewModels.
+ */
 private fun NavController.navigateReplacing(route: Route) {
+    if (currentDestination?.hasRoute(route::class) == true) return
     navigate(route) {
         popUpTo(graph.id) { inclusive = true }
         launchSingleTop = true

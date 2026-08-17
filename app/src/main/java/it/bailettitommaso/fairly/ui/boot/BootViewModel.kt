@@ -19,7 +19,7 @@ sealed interface BootState {
     data object Loading : BootState
     data class Authenticated(val user: User) : BootState
     data object Unauthenticated : BootState
-    data object Offline : BootState
+    data class Unreachable(val cause: SessionResult.Unreachable.Cause) : BootState
 }
 
 @HiltViewModel
@@ -31,8 +31,11 @@ class BootViewModel @Inject constructor(
     private val _state = MutableStateFlow<BootState>(BootState.Loading)
     val state: StateFlow<BootState> = _state.asStateFlow()
 
+    private val _retrying = MutableStateFlow(false)
+    val retrying: StateFlow<Boolean> = _retrying.asStateFlow()
+
     init {
-        check()
+        viewModelScope.launch { resolve() }
         observeSessionExpiry()
     }
 
@@ -46,25 +49,31 @@ class BootViewModel @Inject constructor(
         }
     }
 
-    /** Re-runs the boot session check (used by the offline screen on reconnect). */
+    /**
+     * Re-runs the boot session check (used by the offline screen on reconnect). Deliberately keeps
+     * the current state instead of flipping back to [BootState.Loading]: the nav graph keys off
+     * [state], and the extra transition used to re-trigger navigation and loop.
+     */
     fun retry() {
+        if (_retrying.value) return
         Timber.d("boot: retry requested")
-        check()
+        _retrying.value = true
+        viewModelScope.launch {
+            resolve()
+            _retrying.value = false
+        }
     }
 
-    private fun check() {
-        _state.value = BootState.Loading
-        viewModelScope.launch {
-            val newState = when (val result = sessionRepository.bootstrap()) {
-                is SessionResult.Authenticated -> {
-                    sessionManager.markAuthenticated()
-                    BootState.Authenticated(result.user)
-                }
-                SessionResult.Unauthenticated -> BootState.Unauthenticated
-                SessionResult.Offline -> BootState.Offline
+    private suspend fun resolve() {
+        val newState = when (val result = sessionRepository.bootstrap()) {
+            is SessionResult.Authenticated -> {
+                sessionManager.markAuthenticated()
+                BootState.Authenticated(result.user)
             }
-            Timber.d("boot: resolved state=%s", newState::class.simpleName)
-            _state.value = newState
+            SessionResult.Unauthenticated -> BootState.Unauthenticated
+            is SessionResult.Unreachable -> BootState.Unreachable(result.cause)
         }
+        Timber.d("boot: resolved state=%s", newState::class.simpleName)
+        _state.value = newState
     }
 }
