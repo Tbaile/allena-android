@@ -96,7 +96,14 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
                 onExerciseClick = { id -> navController.navigate(Route.ExerciseDetail(id)) },
             )
         }
-        composable<Route.ExerciseDetail> {
+        composable<Route.ExerciseDetail>(
+            enterTransition = {
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(300))
+            },
+        ) {
             ExerciseDetailScreen(onBack = { navController.popBackStack() })
         }
     }
