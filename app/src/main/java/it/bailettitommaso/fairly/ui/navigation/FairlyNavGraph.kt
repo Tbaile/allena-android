@@ -13,6 +13,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import it.bailettitommaso.fairly.ui.HomeScreen
 import it.bailettitommaso.fairly.ui.auth.ChangePasswordScreen
 import it.bailettitommaso.fairly.ui.auth.LoginScreen
@@ -33,7 +34,7 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
         when (val state = bootState) {
             BootState.Loading -> Unit
             is BootState.Authenticated -> navController.navigateReplacing(
-                if (state.user.mustChangePassword) Route.ChangePassword else Route.Home,
+                if (state.user.mustChangePassword) Route.ChangePassword(forced = true) else Route.Home,
             )
             BootState.Unauthenticated -> navController.navigateReplacing(Route.Login)
             BootState.Offline -> navController.navigateReplacing(Route.Offline)
@@ -48,13 +49,23 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
             LoginScreen(
                 onLoggedIn = { mustChangePassword ->
                     navController.navigateReplacing(
-                        if (mustChangePassword) Route.ChangePassword else Route.Home,
+                        if (mustChangePassword) Route.ChangePassword(forced = true) else Route.Home,
                     )
                 },
             )
         }
-        composable<Route.ChangePassword> {
-            ChangePasswordScreen(onDone = { navController.navigateReplacing(Route.Home) })
+        composable<Route.ChangePassword> { backStackEntry ->
+            val route: Route.ChangePassword = backStackEntry.toRoute()
+            ChangePasswordScreen(
+                onDone = {
+                    if (route.forced) {
+                        navController.navigateReplacing(Route.Home)
+                    } else {
+                        navController.popBackStack()
+                    }
+                },
+                onBack = { navController.popBackStack() },
+            )
         }
         composable<Route.Offline> {
             val connectivityViewModel: ConnectivityViewModel = hiltViewModel()
@@ -75,7 +86,10 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
                 }
             },
         ) {
-            HomeScreen(onLoggedOut = { navController.navigateReplacing(Route.Login) })
+            HomeScreen(
+                onLoggedOut = { navController.navigateReplacing(Route.Login) },
+                onChangePassword = { navController.navigate(Route.ChangePassword(forced = false)) },
+            )
         }
     }
 }

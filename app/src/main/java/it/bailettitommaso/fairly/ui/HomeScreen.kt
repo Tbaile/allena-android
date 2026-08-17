@@ -29,7 +29,7 @@ private enum class HomeTab(val label: String, val icon: ImageVector) {
 
 /** Authenticated shell: a bottom navigation bar hosting the top-level sections. */
 @Composable
-fun HomeScreen(onLoggedOut: () -> Unit) {
+fun HomeScreen(onLoggedOut: () -> Unit, onChangePassword: () -> Unit = {}) {
     var selected by rememberSaveable { mutableStateOf(HomeTab.Exercises) }
 
     Scaffold(
@@ -49,7 +49,11 @@ fun HomeScreen(onLoggedOut: () -> Unit) {
         val contentModifier = Modifier.padding(padding)
         when (selected) {
             HomeTab.Exercises -> ExercisesScreen(modifier = contentModifier)
-            HomeTab.Profile -> ProfileScreen(onLogout = onLoggedOut, modifier = contentModifier)
+            HomeTab.Profile -> ProfileScreen(
+                onLogout = onLoggedOut,
+                onChangePassword = onChangePassword,
+                modifier = contentModifier,
+            )
         }
     }
 }

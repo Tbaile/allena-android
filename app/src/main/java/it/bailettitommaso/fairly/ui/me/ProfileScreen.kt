@@ -38,6 +38,7 @@ import it.bailettitommaso.fairly.ui.theme.FairlyTheme
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
+    onChangePassword: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
@@ -48,26 +49,32 @@ fun ProfileScreen(
         if (loggedOut) onLogout()
     }
 
-    ProfileContent(profile = profile, onLogout = viewModel::logout, modifier = modifier)
+    ProfileContent(
+        profile = profile,
+        onLogout = viewModel::logout,
+        onChangePassword = onChangePassword,
+        modifier = modifier,
+    )
 }
 
 @Composable
 private fun ProfileContent(
     profile: ProfileUiState,
     onLogout: () -> Unit,
+    onChangePassword: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         if (profile.isLoading) {
             CircularProgressIndicator()
         } else {
-            ProfileDetails(profile = profile, onLogout = onLogout)
+            ProfileDetails(profile = profile, onLogout = onLogout, onChangePassword = onChangePassword)
         }
     }
 }
 
 @Composable
-private fun ProfileDetails(profile: ProfileUiState, onLogout: () -> Unit) {
+private fun ProfileDetails(profile: ProfileUiState, onLogout: () -> Unit, onChangePassword: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -85,7 +92,7 @@ private fun ProfileDetails(profile: ProfileUiState, onLogout: () -> Unit) {
             ProfileRow(label = "Email", value = profile.email.ifBlank { "—" })
         }
 
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(onClick = onChangePassword, modifier = Modifier.fillMaxWidth()) {
             ListItem(
                 headlineContent = { Text("Change password") },
                 leadingContent = { Icon(Icons.Filled.Lock, contentDescription = null) },

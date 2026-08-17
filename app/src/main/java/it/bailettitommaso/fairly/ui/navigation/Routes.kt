@@ -13,8 +13,9 @@ sealed interface Route {
     @Serializable
     data object Offline : Route
 
+    /** [forced] true after a login where `must_change_password` is set: no back nav, no current-password field. */
     @Serializable
-    data object ChangePassword : Route
+    data class ChangePassword(val forced: Boolean = false) : Route
 
     @Serializable
     data object Home : Route
