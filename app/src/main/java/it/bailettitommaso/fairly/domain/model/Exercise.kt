@@ -6,4 +6,5 @@ data class Exercise(
     val description: String,
     val category: Category?,
     val videoUrl: String?,
+    val tags: List<Tag> = emptyList(),
 )

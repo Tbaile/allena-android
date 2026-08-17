@@ -1,0 +1,168 @@
+package it.bailettitommaso.fairly.ui.exercises
+
+import android.content.res.Configuration
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.bailettitommaso.fairly.domain.model.Category
+import it.bailettitommaso.fairly.domain.model.Exercise
+import it.bailettitommaso.fairly.domain.model.Tag
+import it.bailettitommaso.fairly.ui.components.ErrorText
+import it.bailettitommaso.fairly.ui.components.FairlyButton
+import it.bailettitommaso.fairly.ui.theme.FairlyTheme
+
+@Composable
+fun ExerciseDetailScreen(
+    onBack: () -> Unit,
+    viewModel: ExerciseDetailViewModel = hiltViewModel(),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    ExerciseDetailContent(state = state, onBack = onBack, onRetry = viewModel::retry)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExerciseDetailContent(
+    state: ExerciseDetailUiState,
+    onBack: () -> Unit,
+    onRetry: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Exercise") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            contentAlignment = Alignment.Center,
+        ) {
+            when (state) {
+                ExerciseDetailUiState.Loading -> CircularProgressIndicator()
+                is ExerciseDetailUiState.Success -> ExerciseDetails(state.exercise)
+                else -> Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(24.dp),
+                ) {
+                    ErrorText(message = state.message())
+                    if (state != ExerciseDetailUiState.NotFound) {
+                        FairlyButton(text = "Retry", onClick = onRetry)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ExerciseDetails(exercise: Exercise) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(text = exercise.name, style = MaterialTheme.typography.headlineSmall)
+
+        if (exercise.category != null || exercise.tags.isNotEmpty()) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                exercise.category?.let { category ->
+                    AssistChip(onClick = {}, label = { Text(category.name) })
+                }
+                exercise.tags.forEach { tag ->
+                    AssistChip(onClick = {}, label = { Text(tag.name) })
+                }
+            }
+        }
+
+        Text(text = exercise.description, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+private fun ExerciseDetailUiState.message(): String = when (this) {
+    ExerciseDetailUiState.NotFound -> "This exercise is no longer available."
+    ExerciseDetailUiState.Offline -> "You appear to be offline. Check your connection."
+    else -> "Something went wrong. Please try again."
+}
+
+private val previewExercise = Exercise(
+    id = 1,
+    name = "Barbell Back Squat",
+    description = "Rest the barbell on your upper back, brace your core and sit down until your " +
+        "thighs are parallel to the floor. Drive through the heels to stand back up.",
+    category = Category(3, "Strength", "strength"),
+    videoUrl = null,
+    tags = listOf(Tag(1, "Legs", "legs"), Tag(2, "Compound", "compound"), Tag(3, "Barbell", "barbell")),
+)
+
+@Preview(showBackground = true)
+@Composable
+private fun ExerciseDetailContentPreview() {
+    FairlyTheme {
+        ExerciseDetailContent(
+            state = ExerciseDetailUiState.Success(previewExercise),
+            onBack = {},
+            onRetry = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun ExerciseDetailContentDarkPreview() {
+    FairlyTheme {
+        ExerciseDetailContent(
+            state = ExerciseDetailUiState.Success(previewExercise),
+            onBack = {},
+            onRetry = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ExerciseDetailContentOfflinePreview() {
+    FairlyTheme {
+        ExerciseDetailContent(
+            state = ExerciseDetailUiState.Offline,
+            onBack = {},
+            onRetry = {},
+        )
+    }
+}

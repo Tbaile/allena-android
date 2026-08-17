@@ -9,6 +9,7 @@ import it.bailettitommaso.fairly.data.remote.dto.toDomain
 import it.bailettitommaso.fairly.domain.model.Exercise
 import it.bailettitommaso.fairly.domain.repository.CategoriesResult
 import it.bailettitommaso.fairly.domain.repository.ExerciseRepository
+import it.bailettitommaso.fairly.domain.repository.ExerciseResult
 import kotlinx.coroutines.flow.Flow
 import retrofit2.HttpException
 import timber.log.Timber
@@ -26,6 +27,18 @@ class ExerciseRepositoryImpl @Inject constructor(
         ).flow
     }
 
+    override suspend fun get(id: Long): ExerciseResult {
+        return try {
+            ExerciseResult.Success(exerciseApi.get(id).data.toDomain())
+        } catch (e: HttpException) {
+            Timber.d("exercise %d: server error %d", id, e.code())
+            if (e.code() == HTTP_NOT_FOUND) ExerciseResult.NotFound else ExerciseResult.Error
+        } catch (e: IOException) {
+            Timber.d(e, "exercise %d: network error, offline", id)
+            ExerciseResult.Offline
+        }
+    }
+
     override suspend fun categories(): CategoriesResult {
         return try {
             val response = exerciseApi.categories()
@@ -41,5 +54,6 @@ class ExerciseRepositoryImpl @Inject constructor(
 
     private companion object {
         const val PAGE_SIZE = 20
+        const val HTTP_NOT_FOUND = 404
     }
 }

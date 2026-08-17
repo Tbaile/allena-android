@@ -40,6 +40,7 @@ import java.io.IOException
 
 @Composable
 fun ExercisesScreen(
+    onExerciseClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ExerciseListViewModel = hiltViewModel(),
 ) {
@@ -50,6 +51,7 @@ fun ExercisesScreen(
         exercises = exercises,
         onQueryChange = viewModel::onQueryChange,
         onCategorySelect = viewModel::onCategorySelect,
+        onExerciseClick = onExerciseClick,
         modifier = modifier,
     )
 }
@@ -60,6 +62,7 @@ private fun ExercisesContent(
     exercises: LazyPagingItems<Exercise>,
     onQueryChange: (String) -> Unit,
     onCategorySelect: (String?) -> Unit,
+    onExerciseClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -104,14 +107,14 @@ private fun ExercisesContent(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                else -> ExerciseList(exercises = exercises)
+                else -> ExerciseList(exercises = exercises, onExerciseClick = onExerciseClick)
             }
         }
     }
 }
 
 @Composable
-private fun ExerciseList(exercises: LazyPagingItems<Exercise>) {
+private fun ExerciseList(exercises: LazyPagingItems<Exercise>, onExerciseClick: (Long) -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -119,7 +122,10 @@ private fun ExerciseList(exercises: LazyPagingItems<Exercise>) {
     ) {
         items(count = exercises.itemCount, key = exercises.itemKey { it.id }) { index ->
             val exercise = exercises[index] ?: return@items
-            Card(modifier = Modifier.fillMaxWidth()) {
+            Card(
+                onClick = { onExerciseClick(exercise.id) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 ListItem(
                     headlineContent = { Text(exercise.name) },
                     supportingContent = exercise.category?.let { { Text(it.name) } },
@@ -172,6 +178,7 @@ private fun ExercisesContentPreview() {
             exercises = previewPagingItems(previewExercises),
             onQueryChange = {},
             onCategorySelect = {},
+            onExerciseClick = {},
         )
     }
 }
@@ -188,6 +195,7 @@ private fun ExercisesContentDarkPreview() {
             exercises = previewPagingItems(previewExercises),
             onQueryChange = {},
             onCategorySelect = {},
+            onExerciseClick = {},
         )
     }
 }
@@ -201,6 +209,7 @@ private fun ExercisesContentEmptyPreview() {
             exercises = previewPagingItems(emptyList()),
             onQueryChange = {},
             onCategorySelect = {},
+            onExerciseClick = {},
         )
     }
 }

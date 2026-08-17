@@ -19,4 +19,7 @@ sealed interface Route {
 
     @Serializable
     data object Home : Route
+
+    @Serializable
+    data class ExerciseDetail(val id: Long) : Route
 }

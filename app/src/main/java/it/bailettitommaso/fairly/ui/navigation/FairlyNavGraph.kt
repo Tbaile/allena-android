@@ -20,6 +20,7 @@ import it.bailettitommaso.fairly.ui.auth.LoginScreen
 import it.bailettitommaso.fairly.ui.boot.BootScreen
 import it.bailettitommaso.fairly.ui.boot.BootState
 import it.bailettitommaso.fairly.ui.boot.BootViewModel
+import it.bailettitommaso.fairly.ui.exercises.ExerciseDetailScreen
 import it.bailettitommaso.fairly.domain.repository.SessionResult
 import it.bailettitommaso.fairly.ui.offline.ConnectivityViewModel
 import it.bailettitommaso.fairly.ui.offline.OfflineScreen
@@ -92,7 +93,11 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
             HomeScreen(
                 onLoggedOut = { navController.navigateReplacing(Route.Login) },
                 onChangePassword = { navController.navigate(Route.ChangePassword(forced = false)) },
+                onExerciseClick = { id -> navController.navigate(Route.ExerciseDetail(id)) },
             )
+        }
+        composable<Route.ExerciseDetail> {
+            ExerciseDetailScreen(onBack = { navController.popBackStack() })
         }
     }
 }
