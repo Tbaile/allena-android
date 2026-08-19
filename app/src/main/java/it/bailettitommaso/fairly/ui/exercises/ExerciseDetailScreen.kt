@@ -32,8 +32,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.bailettitommaso.fairly.domain.model.Category
 import it.bailettitommaso.fairly.domain.model.Exercise
 import it.bailettitommaso.fairly.domain.model.Tag
-import it.bailettitommaso.fairly.ui.components.ErrorText
-import it.bailettitommaso.fairly.ui.components.FairlyButton
+import it.bailettitommaso.fairly.ui.components.OfflineCause
+import it.bailettitommaso.fairly.ui.components.OfflineState
 import it.bailettitommaso.fairly.ui.theme.FairlyTheme
 
 @Composable
@@ -73,16 +73,20 @@ private fun ExerciseDetailContent(
             when (state) {
                 ExerciseDetailUiState.Loading -> CircularProgressIndicator()
                 is ExerciseDetailUiState.Success -> ExerciseDetails(state.exercise)
-                else -> Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(24.dp),
-                ) {
-                    ErrorText(message = state.message())
-                    if (state != ExerciseDetailUiState.NotFound) {
-                        FairlyButton(text = "Retry", onClick = onRetry)
-                    }
-                }
+                ExerciseDetailUiState.NotFound -> OfflineState(
+                    cause = OfflineCause.NOT_FOUND,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                ExerciseDetailUiState.Offline -> OfflineState(
+                    cause = OfflineCause.NETWORK,
+                    modifier = Modifier.fillMaxSize(),
+                    onRetry = onRetry,
+                )
+                ExerciseDetailUiState.Error -> OfflineState(
+                    cause = OfflineCause.SERVER,
+                    modifier = Modifier.fillMaxSize(),
+                    onRetry = onRetry,
+                )
             }
         }
     }
@@ -113,12 +117,6 @@ private fun ExerciseDetails(exercise: Exercise) {
 
         Text(text = exercise.description, style = MaterialTheme.typography.bodyMedium)
     }
-}
-
-private fun ExerciseDetailUiState.message(): String = when (this) {
-    ExerciseDetailUiState.NotFound -> "This exercise is no longer available."
-    ExerciseDetailUiState.Offline -> "You appear to be offline. Check your connection."
-    else -> "Something went wrong. Please try again."
 }
 
 private val previewExercise = Exercise(

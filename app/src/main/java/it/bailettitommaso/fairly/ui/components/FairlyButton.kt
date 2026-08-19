@@ -2,9 +2,11 @@ package it.bailettitommaso.fairly.ui.components
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -32,8 +34,11 @@ fun FairlyButton(
     ) {
         if (loading) {
             CircularProgressIndicator(
-                modifier = Modifier.padding(end = 8.dp),
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .size(16.dp),
                 strokeWidth = 2.dp,
+                color = LocalContentColor.current,
             )
         }
         Text(text)

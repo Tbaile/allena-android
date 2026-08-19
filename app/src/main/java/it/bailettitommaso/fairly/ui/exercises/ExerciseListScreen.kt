@@ -34,9 +34,10 @@ import it.bailettitommaso.fairly.domain.model.Category
 import it.bailettitommaso.fairly.domain.model.Exercise
 import it.bailettitommaso.fairly.ui.components.ErrorText
 import it.bailettitommaso.fairly.ui.components.FairlyTextField
+import it.bailettitommaso.fairly.ui.components.OfflineState
+import it.bailettitommaso.fairly.ui.components.toOfflineCause
 import it.bailettitommaso.fairly.ui.theme.FairlyTheme
 import kotlinx.coroutines.flow.flowOf
-import java.io.IOException
 
 @Composable
 fun ExercisesScreen(
@@ -101,7 +102,11 @@ private fun ExercisesContent(
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             when {
                 refreshState is LoadState.Loading -> CircularProgressIndicator()
-                refreshState is LoadState.Error -> ErrorText(message = refreshState.error.toDisplayMessage())
+                refreshState is LoadState.Error -> OfflineState(
+                    cause = refreshState.error.toOfflineCause(),
+                    modifier = Modifier.fillMaxSize(),
+                    onRetry = exercises::retry,
+                )
                 exercises.itemCount == 0 -> Text(
                     text = "No exercises found",
                     style = MaterialTheme.typography.bodyLarge,
@@ -140,16 +145,14 @@ private fun ExerciseList(exercises: LazyPagingItems<Exercise>, onExerciseClick: 
                 }
             }
             is LoadState.Error -> item {
-                ErrorText(message = append.error.toDisplayMessage(), modifier = Modifier.fillMaxWidth())
+                ErrorText(
+                    message = append.error.toOfflineCause().message,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
             is LoadState.NotLoading -> Unit
         }
     }
-}
-
-private fun Throwable.toDisplayMessage(): String = when (this) {
-    is IOException -> "You appear to be offline. Check your connection."
-    else -> "Something went wrong. Please try again."
 }
 
 private val previewExercises = listOf(
