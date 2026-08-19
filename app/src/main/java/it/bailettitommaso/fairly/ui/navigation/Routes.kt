@@ -22,4 +22,7 @@ sealed interface Route {
 
     @Serializable
     data class ExerciseDetail(val id: Long) : Route
+
+    @Serializable
+    data object Settings : Route
 }

@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -39,6 +41,7 @@ import it.bailettitommaso.fairly.ui.theme.FairlyTheme
 fun ProfileScreen(
     onLogout: () -> Unit,
     onChangePassword: () -> Unit = {},
+    onSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
@@ -53,6 +56,7 @@ fun ProfileScreen(
         profile = profile,
         onLogout = viewModel::logout,
         onChangePassword = onChangePassword,
+        onSettings = onSettings,
         modifier = modifier,
     )
 }
@@ -62,19 +66,30 @@ private fun ProfileContent(
     profile: ProfileUiState,
     onLogout: () -> Unit,
     onChangePassword: () -> Unit = {},
+    onSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         if (profile.isLoading) {
             CircularProgressIndicator()
         } else {
-            ProfileDetails(profile = profile, onLogout = onLogout, onChangePassword = onChangePassword)
+            ProfileDetails(
+                profile = profile,
+                onLogout = onLogout,
+                onChangePassword = onChangePassword,
+                onSettings = onSettings,
+            )
         }
     }
 }
 
 @Composable
-private fun ProfileDetails(profile: ProfileUiState, onLogout: () -> Unit, onChangePassword: () -> Unit) {
+private fun ProfileDetails(
+    profile: ProfileUiState,
+    onLogout: () -> Unit,
+    onChangePassword: () -> Unit,
+    onSettings: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -92,13 +107,23 @@ private fun ProfileDetails(profile: ProfileUiState, onLogout: () -> Unit, onChan
             ProfileRow(label = "Email", value = profile.email.ifBlank { "—" })
         }
 
-        Card(onClick = onChangePassword, modifier = Modifier.fillMaxWidth()) {
+        Card(modifier = Modifier.fillMaxWidth()) {
             ListItem(
                 headlineContent = { Text("Change password") },
                 leadingContent = { Icon(Icons.Filled.Lock, contentDescription = null) },
                 trailingContent = {
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
                 },
+                modifier = Modifier.clickable(onClick = onChangePassword),
+            )
+            HorizontalDivider()
+            ListItem(
+                headlineContent = { Text("Settings") },
+                leadingContent = { Icon(Icons.Filled.Settings, contentDescription = null) },
+                trailingContent = {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                },
+                modifier = Modifier.clickable(onClick = onSettings),
             )
         }
 

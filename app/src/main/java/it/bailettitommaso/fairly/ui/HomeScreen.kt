@@ -33,6 +33,7 @@ fun HomeScreen(
     onLoggedOut: () -> Unit,
     onChangePassword: () -> Unit = {},
     onExerciseClick: (Long) -> Unit = {},
+    onSettings: () -> Unit = {},
 ) {
     var selected by rememberSaveable { mutableStateOf(HomeTab.Exercises) }
 
@@ -59,6 +60,7 @@ fun HomeScreen(
             HomeTab.Profile -> ProfileScreen(
                 onLogout = onLoggedOut,
                 onChangePassword = onChangePassword,
+                onSettings = onSettings,
                 modifier = contentModifier,
             )
         }
