@@ -1,6 +1,8 @@
 package it.bailettitommaso.fairly.ui.me
 
 import android.content.res.Configuration
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,19 +13,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,7 +37,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.bailettitommaso.fairly.ui.components.ErrorText
 import it.bailettitommaso.fairly.ui.components.FairlyButton
+import it.bailettitommaso.fairly.ui.components.FairlyTextField
 import it.bailettitommaso.fairly.ui.theme.FairlyTheme
 
 @Composable
@@ -57,6 +62,10 @@ fun ProfileScreen(
         onLogout = viewModel::logout,
         onChangePassword = onChangePassword,
         onSettings = onSettings,
+        onStartEdit = viewModel::startEdit,
+        onNameChange = viewModel::onNameChange,
+        onCancelEdit = viewModel::cancelEdit,
+        onSave = viewModel::save,
         modifier = modifier,
     )
 }
@@ -67,6 +76,10 @@ private fun ProfileContent(
     onLogout: () -> Unit,
     onChangePassword: () -> Unit = {},
     onSettings: () -> Unit = {},
+    onStartEdit: () -> Unit = {},
+    onNameChange: (String) -> Unit = {},
+    onCancelEdit: () -> Unit = {},
+    onSave: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -78,6 +91,10 @@ private fun ProfileContent(
                 onLogout = onLogout,
                 onChangePassword = onChangePassword,
                 onSettings = onSettings,
+                onStartEdit = onStartEdit,
+                onNameChange = onNameChange,
+                onCancelEdit = onCancelEdit,
+                onSave = onSave,
             )
         }
     }
@@ -89,6 +106,10 @@ private fun ProfileDetails(
     onLogout: () -> Unit,
     onChangePassword: () -> Unit,
     onSettings: () -> Unit,
+    onStartEdit: () -> Unit,
+    onNameChange: (String) -> Unit,
+    onCancelEdit: () -> Unit,
+    onSave: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -100,11 +121,49 @@ private fun ProfileDetails(
         ProfileHeader(name = profile.name, email = profile.email)
 
         Card(modifier = Modifier.fillMaxWidth()) {
-            ProfileRow(label = "Name", value = profile.name.ifBlank { "—" })
-            HorizontalDivider()
-            ProfileRow(label = "Surname", value = "—")
+            if (profile.isEditing) {
+                ProfileNameField(
+                    value = profile.nameDraft,
+                    onValueChange = onNameChange,
+                    enabled = !profile.isSaving,
+                )
+            } else {
+                ProfileRow(
+                    label = "Name",
+                    value = profile.name.ifBlank { "—" },
+                    trailing = {
+                        IconButton(onClick = onStartEdit) {
+                            Icon(Icons.Filled.Edit, contentDescription = "Edit name")
+                        }
+                    },
+                )
+            }
             HorizontalDivider()
             ProfileRow(label = "Email", value = profile.email.ifBlank { "—" })
+        }
+
+        if (profile.isEditing) {
+            profile.error?.let { ErrorText(message = it.message(), modifier = Modifier.fillMaxWidth()) }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(
+                    onClick = onCancelEdit,
+                    enabled = !profile.isSaving,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("Cancel")
+                }
+                FairlyButton(
+                    text = "Save",
+                    onClick = onSave,
+                    enabled = profile.canSave,
+                    loading = profile.isSaving,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
 
         Card(modifier = Modifier.fillMaxWidth()) {
@@ -170,11 +229,34 @@ private fun ProfileHeader(name: String, email: String) {
 }
 
 @Composable
-private fun ProfileRow(label: String, value: String) {
-    Row(
+private fun ProfileNameField(value: String, onValueChange: (String) -> Unit, enabled: Boolean) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = "Name",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        FairlyTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = "Name",
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun ProfileRow(label: String, value: String, trailing: @Composable (() -> Unit)? = null) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = if (trailing == null) 16.dp else 4.dp, top = 12.dp, bottom = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -183,11 +265,19 @@ private fun ProfileRow(label: String, value: String) {
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            trailing?.invoke()
+        }
     }
+}
+
+private fun ProfileError.message(): String = when (this) {
+    ProfileError.OFFLINE -> "No connection. Check your network and try again."
+    ProfileError.GENERIC -> "Could not save your name. Please try again."
 }
 
 @Preview(showBackground = true)
@@ -207,6 +297,41 @@ private fun ProfileContentDarkPreview() {
     FairlyTheme {
         ProfileContent(
             profile = ProfileUiState(isLoading = false, name = "Mario", email = "mario.rossi@example.com"),
+            onLogout = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ProfileContentEditingPreview() {
+    FairlyTheme {
+        ProfileContent(
+            profile = ProfileUiState(
+                isLoading = false,
+                name = "Mario",
+                email = "mario.rossi@example.com",
+                isEditing = true,
+                nameDraft = "Mario Rossi",
+            ),
+            onLogout = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ProfileContentEditingErrorPreview() {
+    FairlyTheme {
+        ProfileContent(
+            profile = ProfileUiState(
+                isLoading = false,
+                name = "Mario",
+                email = "mario.rossi@example.com",
+                isEditing = true,
+                nameDraft = "Mario Rossi",
+                error = ProfileError.OFFLINE,
+            ),
             onLogout = {},
         )
     }

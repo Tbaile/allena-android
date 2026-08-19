@@ -22,6 +22,7 @@ data class MeDto(
 /** `PUT /me` request body. All fields optional — only send what's changing. */
 @Serializable
 data class UpdateMeRequestDto(
+    val name: String? = null,
     @SerialName("current_password") val currentPassword: String? = null,
     val password: String? = null,
     @SerialName("password_confirmation") val passwordConfirmation: String? = null,

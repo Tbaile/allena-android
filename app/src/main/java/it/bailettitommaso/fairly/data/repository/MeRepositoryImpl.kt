@@ -2,8 +2,10 @@ package it.bailettitommaso.fairly.data.repository
 
 import it.bailettitommaso.fairly.data.remote.api.MeApi
 import it.bailettitommaso.fairly.data.remote.dto.UpdateMeRequestDto
+import it.bailettitommaso.fairly.data.remote.dto.toDomain
 import it.bailettitommaso.fairly.domain.repository.ChangePasswordResult
 import it.bailettitommaso.fairly.domain.repository.MeRepository
+import it.bailettitommaso.fairly.domain.repository.UpdateProfileResult
 import retrofit2.HttpException
 import timber.log.Timber
 import java.io.IOException
@@ -38,6 +40,20 @@ class MeRepositoryImpl @Inject constructor(
         } catch (e: IOException) {
             Timber.d(e, "changePassword: network error, offline")
             ChangePasswordResult.Offline
+        }
+    }
+
+    override suspend fun updateName(name: String): UpdateProfileResult {
+        return try {
+            val user = meApi.update(UpdateMeRequestDto(name = name)).data.toDomain()
+            Timber.d("updateName: success")
+            UpdateProfileResult.Success(user)
+        } catch (e: HttpException) {
+            Timber.d("updateName: server error %d", e.code())
+            UpdateProfileResult.Error
+        } catch (e: IOException) {
+            Timber.d(e, "updateName: network error, offline")
+            UpdateProfileResult.Offline
         }
     }
 
