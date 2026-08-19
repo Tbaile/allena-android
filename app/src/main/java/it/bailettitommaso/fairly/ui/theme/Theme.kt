@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import it.bailettitommaso.fairly.domain.model.ThemeMode
 
 private val LightColors = lightColorScheme(
     primary = TealPrimaryLight,
@@ -42,9 +43,14 @@ private val DarkColors = darkColorScheme(
 
 @Composable
 fun FairlyTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable () -> Unit,
 ) {
+    val darkTheme = when (themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
         content = content,
