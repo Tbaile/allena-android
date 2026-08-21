@@ -7,4 +7,5 @@ data class Exercise(
     val category: Category?,
     val videoUrl: String?,
     val tags: List<Tag> = emptyList(),
+    val isFavorite: Boolean = false,
 )

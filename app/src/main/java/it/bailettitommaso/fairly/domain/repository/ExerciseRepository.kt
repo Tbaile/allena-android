@@ -22,4 +22,6 @@ interface ExerciseRepository {
     fun list(search: String?, categorySlug: String?): Flow<PagingData<Exercise>>
     suspend fun get(id: Long): ExerciseResult
     suspend fun categories(): CategoriesResult
+    fun favorites(): Flow<List<Exercise>>
+    suspend fun toggleFavorite(exercise: Exercise)
 }
