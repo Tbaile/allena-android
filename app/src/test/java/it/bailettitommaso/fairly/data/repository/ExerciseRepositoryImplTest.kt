@@ -2,6 +2,8 @@ package it.bailettitommaso.fairly.data.repository
 
 import io.mockk.coEvery
 import io.mockk.mockk
+import it.bailettitommaso.fairly.data.local.db.ExerciseDao
+import it.bailettitommaso.fairly.data.local.db.ExerciseEntity
 import it.bailettitommaso.fairly.data.remote.api.ExerciseApi
 import it.bailettitommaso.fairly.data.remote.dto.CategoryDto
 import it.bailettitommaso.fairly.data.remote.dto.CategoryListEnvelopeDto
@@ -23,7 +25,8 @@ import java.io.IOException
 class ExerciseRepositoryImplTest {
 
     private val exerciseApi = mockk<ExerciseApi>()
-    private val repository = ExerciseRepositoryImpl(exerciseApi)
+    private val exerciseDao = mockk<ExerciseDao>()
+    private val repository = ExerciseRepositoryImpl(exerciseApi, exerciseDao)
 
     @Test
     fun `categories success maps DTOs to domain`() = runTest {
@@ -86,12 +89,33 @@ class ExerciseRepositoryImplTest {
     }
 
     @Test
-    fun `get network failure maps to Offline`() = runTest {
+    fun `get network failure with no cache maps to Offline`() = runTest {
         coEvery { exerciseApi.get(7) } throws IOException("no network")
+        coEvery { exerciseDao.getById(7) } returns null
 
         val result = repository.get(7)
 
         assertEquals(ExerciseResult.Offline, result)
+    }
+
+    @Test
+    fun `get network failure with cache hit maps to Success from cache`() = runTest {
+        coEvery { exerciseApi.get(7) } throws IOException("no network")
+        coEvery { exerciseDao.getById(7) } returns ExerciseEntity(
+            id = 7,
+            name = "Cached Squat",
+            description = "Sit down, stand up.",
+            categoryId = null,
+            categoryName = null,
+            categorySlug = null,
+            tagsJson = "[]",
+            videoUrl = null,
+        )
+
+        val result = repository.get(7)
+
+        assertTrue(result is ExerciseResult.Success)
+        assertEquals("Cached Squat", (result as ExerciseResult.Success).exercise.name)
     }
 
     private fun httpException(code: Int) =

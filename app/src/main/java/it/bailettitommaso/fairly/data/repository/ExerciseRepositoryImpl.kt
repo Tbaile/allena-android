@@ -3,6 +3,8 @@ package it.bailettitommaso.fairly.data.repository
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import it.bailettitommaso.fairly.data.local.db.ExerciseDao
+import it.bailettitommaso.fairly.data.local.db.toDomain as toDomainFromCache
 import it.bailettitommaso.fairly.data.paging.ExercisePagingSource
 import it.bailettitommaso.fairly.data.remote.api.ExerciseApi
 import it.bailettitommaso.fairly.data.remote.dto.toDomain
@@ -18,12 +20,13 @@ import javax.inject.Inject
 
 class ExerciseRepositoryImpl @Inject constructor(
     private val exerciseApi: ExerciseApi,
+    private val exerciseDao: ExerciseDao,
 ) : ExerciseRepository {
     override fun list(search: String?, categorySlug: String?): Flow<PagingData<Exercise>> {
         val trimmedSearch = search?.takeIf { it.isNotBlank() }
         return Pager(
             config = PagingConfig(pageSize = PAGE_SIZE, enablePlaceholders = false),
-            pagingSourceFactory = { ExercisePagingSource(exerciseApi, trimmedSearch, categorySlug) },
+            pagingSourceFactory = { ExercisePagingSource(exerciseApi, exerciseDao, trimmedSearch, categorySlug) },
         ).flow
     }
 
@@ -34,8 +37,8 @@ class ExerciseRepositoryImpl @Inject constructor(
             Timber.d("exercise %d: server error %d", id, e.code())
             if (e.code() == HTTP_NOT_FOUND) ExerciseResult.NotFound else ExerciseResult.Error
         } catch (e: IOException) {
-            Timber.d(e, "exercise %d: network error, offline", id)
-            ExerciseResult.Offline
+            Timber.d(e, "exercise %d: network error, checking cache", id)
+            exerciseDao.getById(id)?.let { ExerciseResult.Success(it.toDomainFromCache()) } ?: ExerciseResult.Offline
         }
     }
 

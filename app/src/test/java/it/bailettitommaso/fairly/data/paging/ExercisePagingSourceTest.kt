@@ -4,7 +4,11 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
 import androidx.paging.testing.TestPager
 import io.mockk.coEvery
+import io.mockk.coJustRun
+import io.mockk.coVerify
 import io.mockk.mockk
+import it.bailettitommaso.fairly.data.local.db.ExerciseDao
+import it.bailettitommaso.fairly.data.local.db.ExerciseEntity
 import it.bailettitommaso.fairly.data.remote.api.ExerciseApi
 import it.bailettitommaso.fairly.data.remote.dto.ExerciseDto
 import it.bailettitommaso.fairly.data.remote.dto.ExerciseListEnvelopeDto
@@ -23,7 +27,8 @@ import java.io.IOException
 class ExercisePagingSourceTest {
 
     private val exerciseApi = mockk<ExerciseApi>()
-    private val pagingSource = ExercisePagingSource(exerciseApi, search = null, categorySlug = null)
+    private val exerciseDao = mockk<ExerciseDao>()
+    private val pagingSource = ExercisePagingSource(exerciseApi, exerciseDao, search = null, categorySlug = null)
     private val testPager = TestPager(PagingConfig(pageSize = 20), pagingSource)
 
     private fun envelope(page: Int, lastPage: Int, itemCount: Int) = ExerciseListEnvelopeDto(
@@ -34,21 +39,24 @@ class ExercisePagingSourceTest {
     )
 
     @Test
-    fun `first page maps DTOs and computes next key from last_page`() = runTest {
+    fun `first page maps DTOs, caches them, and computes next key from last_page`() = runTest {
         coEvery { exerciseApi.list(search = null, categorySlug = null, page = 1) } returns
             envelope(page = 1, lastPage = 2, itemCount = 20)
+        coJustRun { exerciseDao.upsertAll(any()) }
 
         val result = testPager.refresh() as PagingSource.LoadResult.Page
 
         assertEquals(20, result.data.size)
         assertEquals(2, result.nextKey)
         assertNull(result.prevKey)
+        coVerify { exerciseDao.upsertAll(match { it.size == 20 }) }
     }
 
     @Test
     fun `last page has null next key`() = runTest {
         coEvery { exerciseApi.list(search = null, categorySlug = null, page = 1) } returns
             envelope(page = 1, lastPage = 1, itemCount = 5)
+        coJustRun { exerciseDao.upsertAll(any()) }
 
         val result = testPager.refresh() as PagingSource.LoadResult.Page
 
@@ -56,12 +64,27 @@ class ExercisePagingSourceTest {
     }
 
     @Test
-    fun `IOException maps to LoadResult Error`() = runTest {
+    fun `IOException falls back to cached rows as a single page`() = runTest {
         coEvery { exerciseApi.list(search = null, categorySlug = null, page = 1) } throws IOException("offline")
+        coEvery { exerciseDao.search(null, null) } returns listOf(
+            ExerciseEntity(
+                id = 1,
+                name = "Cached exercise",
+                description = "",
+                categoryId = null,
+                categoryName = null,
+                categorySlug = null,
+                tagsJson = "[]",
+                videoUrl = null,
+            ),
+        )
 
-        val result = testPager.refresh()
+        val result = testPager.refresh() as PagingSource.LoadResult.Page
 
-        assertTrue(result is PagingSource.LoadResult.Error)
+        assertEquals(1, result.data.size)
+        assertEquals("Cached exercise", result.data.single().name)
+        assertNull(result.nextKey)
+        assertNull(result.prevKey)
     }
 
     @Test

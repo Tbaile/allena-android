@@ -82,6 +82,9 @@ dependencies {
     // Concurrency + persistence
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     // Pagination
     implementation(libs.androidx.paging.runtime)
@@ -98,4 +101,5 @@ dependencies {
     testImplementation(libs.androidx.paging.testing)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
 }
