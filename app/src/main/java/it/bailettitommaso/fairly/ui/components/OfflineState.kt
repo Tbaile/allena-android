@@ -3,6 +3,7 @@ package it.bailettitommaso.fairly.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -59,7 +60,7 @@ fun OfflineState(
                 text = "Retry",
                 onClick = onRetry,
                 loading = retrying,
-                modifier = Modifier.padding(top = 24.dp),
+                modifier = Modifier.padding(top = 24.dp).fillMaxWidth(),
             )
         }
     }
