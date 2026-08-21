@@ -1,15 +1,20 @@
 package it.bailettitommaso.fairly.data.repository
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import it.bailettitommaso.fairly.data.local.db.ExerciseDao
 import it.bailettitommaso.fairly.data.local.db.ExerciseEntity
+import it.bailettitommaso.fairly.data.local.db.FavoriteExerciseDao
+import it.bailettitommaso.fairly.data.local.db.FavoriteExerciseEntity
 import it.bailettitommaso.fairly.data.remote.api.ExerciseApi
 import it.bailettitommaso.fairly.data.remote.dto.CategoryDto
 import it.bailettitommaso.fairly.data.remote.dto.CategoryListEnvelopeDto
 import it.bailettitommaso.fairly.data.remote.dto.ExerciseDto
 import it.bailettitommaso.fairly.data.remote.dto.ExerciseEnvelopeDto
 import it.bailettitommaso.fairly.data.remote.dto.TagDto
+import it.bailettitommaso.fairly.domain.model.Category
+import it.bailettitommaso.fairly.domain.model.Exercise
 import it.bailettitommaso.fairly.domain.repository.CategoriesResult
 import it.bailettitommaso.fairly.domain.repository.ExerciseResult
 import kotlinx.coroutines.test.runTest
@@ -25,8 +30,9 @@ import java.io.IOException
 class ExerciseRepositoryImplTest {
 
     private val exerciseApi = mockk<ExerciseApi>()
-    private val exerciseDao = mockk<ExerciseDao>()
-    private val repository = ExerciseRepositoryImpl(exerciseApi, exerciseDao)
+    private val exerciseDao = mockk<ExerciseDao>(relaxed = true)
+    private val favoriteExerciseDao = mockk<FavoriteExerciseDao>(relaxed = true)
+    private val repository = ExerciseRepositoryImpl(exerciseApi, exerciseDao, favoriteExerciseDao)
 
     @Test
     fun `categories success maps DTOs to domain`() = runTest {
@@ -116,6 +122,34 @@ class ExerciseRepositoryImplTest {
 
         assertTrue(result is ExerciseResult.Success)
         assertEquals("Cached Squat", (result as ExerciseResult.Success).exercise.name)
+    }
+
+    @Test
+    fun `toggleFavorite caches the exercise and adds it when not yet favorited`() = runTest {
+        val exercise = Exercise(
+            id = 7,
+            name = "Barbell Back Squat",
+            description = "Sit down, stand up.",
+            category = Category(3, "Strength", "strength"),
+            videoUrl = null,
+        )
+        coEvery { favoriteExerciseDao.isFavoriteNow(7) } returns false
+
+        repository.toggleFavorite(exercise)
+
+        coVerify { exerciseDao.upsertAll(match { it.single().id == 7L }) }
+        coVerify { favoriteExerciseDao.add(FavoriteExerciseEntity(7)) }
+    }
+
+    @Test
+    fun `toggleFavorite removes it when already favorited`() = runTest {
+        val exercise = Exercise(id = 7, name = "Barbell Back Squat", description = "", category = null, videoUrl = null)
+        coEvery { favoriteExerciseDao.isFavoriteNow(7) } returns true
+
+        repository.toggleFavorite(exercise)
+
+        coVerify { favoriteExerciseDao.remove(FavoriteExerciseEntity(7)) }
+        coVerify(exactly = 0) { exerciseDao.upsertAll(any()) }
     }
 
     private fun httpException(code: Int) =
