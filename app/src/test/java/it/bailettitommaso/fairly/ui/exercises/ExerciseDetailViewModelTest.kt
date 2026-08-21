@@ -3,7 +3,9 @@ package it.bailettitommaso.fairly.ui.exercises
 import androidx.lifecycle.SavedStateHandle
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.runs
 import it.bailettitommaso.fairly.MainDispatcherRule
 import it.bailettitommaso.fairly.domain.model.Category
 import it.bailettitommaso.fairly.domain.model.Exercise
@@ -69,5 +71,19 @@ class ExerciseDetailViewModelTest {
 
         assertTrue(viewModel.state.value is ExerciseDetailUiState.Success)
         coVerify(exactly = 2) { exerciseRepository.get(7) }
+    }
+
+    @Test
+    fun `toggleFavorite flips favorite state and persists it`() = runTest {
+        coEvery { exerciseRepository.get(7) } returns ExerciseResult.Success(exercise)
+        coEvery { exerciseRepository.toggleFavorite(any()) } just runs
+        val viewModel = viewModel()
+
+        viewModel.toggleFavorite()
+
+        val state = viewModel.state.value
+        assertTrue(state is ExerciseDetailUiState.Success)
+        assertTrue((state as ExerciseDetailUiState.Success).exercise.isFavorite)
+        coVerify { exerciseRepository.toggleFavorite(exercise) }
     }
 }

@@ -12,6 +12,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,7 +44,12 @@ fun ExerciseDetailScreen(
     viewModel: ExerciseDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    ExerciseDetailContent(state = state, onBack = onBack, onRetry = viewModel::retry)
+    ExerciseDetailContent(
+        state = state,
+        onBack = onBack,
+        onRetry = viewModel::retry,
+        onToggleFavorite = viewModel::toggleFavorite,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,6 +58,7 @@ private fun ExerciseDetailContent(
     state: ExerciseDetailUiState,
     onBack: () -> Unit,
     onRetry: () -> Unit,
+    onToggleFavorite: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -59,6 +67,16 @@ private fun ExerciseDetailContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (state is ExerciseDetailUiState.Success) {
+                        IconButton(onClick = onToggleFavorite) {
+                            Icon(
+                                imageVector = if (state.exercise.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                contentDescription = if (state.exercise.isFavorite) "Remove from favorites" else "Add to favorites",
+                            )
+                        }
                     }
                 },
             )

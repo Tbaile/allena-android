@@ -38,6 +38,14 @@ class ExerciseDetailViewModel @Inject constructor(
 
     fun retry() = load()
 
+    fun toggleFavorite() {
+        val current = (_state.value as? ExerciseDetailUiState.Success)?.exercise ?: return
+        viewModelScope.launch {
+            exerciseRepository.toggleFavorite(current)
+            _state.value = ExerciseDetailUiState.Success(current.copy(isFavorite = !current.isFavorite))
+        }
+    }
+
     private fun load() {
         _state.value = ExerciseDetailUiState.Loading
         viewModelScope.launch {
