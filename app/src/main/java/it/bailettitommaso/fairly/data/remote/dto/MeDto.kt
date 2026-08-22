@@ -16,6 +16,7 @@ data class MeDto(
     val email: String,
     val role: String? = null,
     @SerialName("must_change_password") val mustChangePassword: Boolean = false,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
 )
 

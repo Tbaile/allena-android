@@ -3,11 +3,16 @@ package it.bailettitommaso.fairly.data.repository
 import it.bailettitommaso.fairly.data.remote.api.MeApi
 import it.bailettitommaso.fairly.data.remote.dto.UpdateMeRequestDto
 import it.bailettitommaso.fairly.data.remote.dto.toDomain
+import it.bailettitommaso.fairly.domain.repository.AvatarResult
 import it.bailettitommaso.fairly.domain.repository.ChangePasswordResult
 import it.bailettitommaso.fairly.domain.repository.MeRepository
 import it.bailettitommaso.fairly.domain.repository.UpdateProfileResult
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.HttpException
 import timber.log.Timber
+import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 
@@ -57,7 +62,47 @@ class MeRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun uploadAvatar(photo: File): AvatarResult {
+        val part = MultipartBody.Part.createFormData(
+            "photo",
+            photo.name,
+            photo.asRequestBody(JPEG_MEDIA_TYPE.toMediaType()),
+        )
+
+        return try {
+            val user = meApi.uploadAvatar(part).data.toDomain()
+            Timber.d("uploadAvatar: success")
+            AvatarResult.Success(user)
+        } catch (e: HttpException) {
+            if (e.code() == HTTP_UNPROCESSABLE_ENTITY) {
+                Timber.d("uploadAvatar: rejected by the backend")
+                AvatarResult.Rejected
+            } else {
+                Timber.d("uploadAvatar: server error %d", e.code())
+                AvatarResult.Error
+            }
+        } catch (e: IOException) {
+            Timber.d(e, "uploadAvatar: network error, offline")
+            AvatarResult.Offline
+        }
+    }
+
+    override suspend fun removeAvatar(): AvatarResult {
+        return try {
+            val user = meApi.deleteAvatar().data.toDomain()
+            Timber.d("removeAvatar: success")
+            AvatarResult.Success(user)
+        } catch (e: HttpException) {
+            Timber.d("removeAvatar: server error %d", e.code())
+            AvatarResult.Error
+        } catch (e: IOException) {
+            Timber.d(e, "removeAvatar: network error, offline")
+            AvatarResult.Offline
+        }
+    }
+
     private companion object {
         const val HTTP_UNPROCESSABLE_ENTITY = 422
+        const val JPEG_MEDIA_TYPE = "image/jpeg"
     }
 }

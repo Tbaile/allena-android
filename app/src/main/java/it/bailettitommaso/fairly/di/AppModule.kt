@@ -11,6 +11,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import it.bailettitommaso.fairly.util.ConnectivityObserver
+import it.bailettitommaso.fairly.util.ImageFileStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -37,4 +38,9 @@ object AppModule {
     @Singleton
     fun provideConnectivityObserver(@ApplicationContext context: Context): ConnectivityObserver =
         ConnectivityObserver(context)
+
+    @Provides
+    @Singleton
+    fun provideImageFileStore(@ApplicationContext context: Context): ImageFileStore =
+        ImageFileStore(context)
 }

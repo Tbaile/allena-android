@@ -10,6 +10,7 @@ fun MeDto.toDomain(): User = User(
     name = name,
     email = email,
     mustChangePassword = mustChangePassword,
+    avatarUrl = avatarUrl,
 )
 
 fun UserDto.toDomain(): User = User(
