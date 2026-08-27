@@ -4,6 +4,8 @@ import it.bailettitommaso.fairly.domain.model.Category
 import it.bailettitommaso.fairly.domain.model.Exercise
 import it.bailettitommaso.fairly.domain.model.Tag
 import it.bailettitommaso.fairly.domain.model.User
+import it.bailettitommaso.fairly.domain.model.WorkoutPlan
+import it.bailettitommaso.fairly.domain.model.WorkoutPlanItem
 
 fun MeDto.toDomain(): User = User(
     id = id,
@@ -39,4 +41,24 @@ fun ExerciseDto.toDomain(): Exercise = Exercise(
     category = category?.toDomain(),
     videoUrl = videoUrl,
     tags = tags.map { it.toDomain() },
+)
+
+fun WorkoutPlanItemDto.toDomain(): WorkoutPlanItem = WorkoutPlanItem(
+    id = id,
+    position = position,
+    sets = sets,
+    reps = reps,
+    durationSeconds = durationSeconds,
+    restSeconds = restSeconds,
+    targetWeight = targetWeight,
+    notes = notes,
+    exercise = exercise.toDomain(),
+)
+
+fun WorkoutPlanDto.toDomain(): WorkoutPlan = WorkoutPlan(
+    id = id,
+    name = name,
+    description = description,
+    isActive = isActive,
+    items = items.sortedBy { it.position }.map { it.toDomain() },
 )
