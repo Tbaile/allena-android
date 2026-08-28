@@ -16,6 +16,9 @@ interface ExerciseDao {
     @Query("SELECT * FROM exercises WHERE id = :id")
     suspend fun getById(id: Long): ExerciseEntity?
 
+    @Query("SELECT * FROM exercises WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<Long>): List<ExerciseEntity>
+
     @Query(
         "SELECT * FROM exercises " +
             "WHERE (:search IS NULL OR name LIKE '%' || :search || '%') " +
