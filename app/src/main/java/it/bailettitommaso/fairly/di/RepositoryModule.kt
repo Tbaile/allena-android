@@ -8,10 +8,12 @@ import it.bailettitommaso.fairly.data.repository.AuthRepositoryImpl
 import it.bailettitommaso.fairly.data.repository.ExerciseRepositoryImpl
 import it.bailettitommaso.fairly.data.repository.MeRepositoryImpl
 import it.bailettitommaso.fairly.data.repository.SessionRepositoryImpl
+import it.bailettitommaso.fairly.data.repository.WorkoutRepositoryImpl
 import it.bailettitommaso.fairly.domain.repository.AuthRepository
 import it.bailettitommaso.fairly.domain.repository.ExerciseRepository
 import it.bailettitommaso.fairly.domain.repository.MeRepository
 import it.bailettitommaso.fairly.domain.repository.SessionRepository
+import it.bailettitommaso.fairly.domain.repository.WorkoutRepository
 import javax.inject.Singleton
 
 @Module
@@ -33,4 +35,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindMeRepository(impl: MeRepositoryImpl): MeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWorkoutRepository(impl: WorkoutRepositoryImpl): WorkoutRepository
 }
