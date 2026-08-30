@@ -6,6 +6,7 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
+import it.bailettitommaso.fairly.data.sync.WorkoutSyncer
 import okhttp3.OkHttpClient
 import timber.log.Timber
 import javax.inject.Inject
@@ -17,9 +18,13 @@ class FairlyApplication : Application(), SingletonImageLoader.Factory {
     @Inject
     lateinit var okHttpClient: Provider<OkHttpClient>
 
+    @Inject
+    lateinit var workoutSyncer: WorkoutSyncer
+
     override fun onCreate() {
         super.onCreate()
         if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
+        workoutSyncer.start()
     }
 
     /**
