@@ -25,6 +25,7 @@ import it.bailettitommaso.fairly.domain.repository.SessionResult
 import it.bailettitommaso.fairly.ui.offline.ConnectivityViewModel
 import it.bailettitommaso.fairly.ui.offline.OfflineScreen
 import it.bailettitommaso.fairly.ui.settings.SettingsScreen
+import it.bailettitommaso.fairly.ui.workouts.WorkoutPlanDetailScreen
 
 @Composable
 fun FairlyNavGraph(bootViewModel: BootViewModel) {
@@ -95,6 +96,7 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
                 onLoggedOut = { navController.navigateReplacing(Route.Login) },
                 onChangePassword = { navController.navigate(Route.ChangePassword(forced = false)) },
                 onExerciseClick = { id -> navController.navigate(Route.ExerciseDetail(id)) },
+                onWorkoutPlanClick = { id -> navController.navigate(Route.WorkoutPlanDetail(id)) },
                 onSettings = { navController.navigate(Route.Settings) },
             )
         }
@@ -107,6 +109,16 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
             },
         ) {
             ExerciseDetailScreen(onBack = { navController.popBackStack() })
+        }
+        composable<Route.WorkoutPlanDetail>(
+            enterTransition = {
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(300))
+            },
+        ) {
+            WorkoutPlanDetailScreen(onBack = { navController.popBackStack() })
         }
         composable<Route.Settings>(
             enterTransition = {

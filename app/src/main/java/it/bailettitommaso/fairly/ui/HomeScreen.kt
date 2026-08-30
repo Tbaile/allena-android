@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -22,10 +23,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import it.bailettitommaso.fairly.ui.exercises.ExercisesScreen
 import it.bailettitommaso.fairly.ui.favorites.FavoritesScreen
 import it.bailettitommaso.fairly.ui.me.ProfileScreen
+import it.bailettitommaso.fairly.ui.workouts.WorkoutPlansScreen
 import it.bailettitommaso.fairly.ui.theme.FairlyTheme
 
 private enum class HomeTab(val label: String, val icon: ImageVector) {
     Exercises("Exercises", Icons.AutoMirrored.Filled.List),
+    Workouts("Workouts", Icons.Filled.FitnessCenter),
     Favorites("Favorites", Icons.Filled.Favorite),
     Profile("Profile", Icons.Filled.Person),
 }
@@ -36,6 +39,7 @@ fun HomeScreen(
     onLoggedOut: () -> Unit,
     onChangePassword: () -> Unit = {},
     onExerciseClick: (Long) -> Unit = {},
+    onWorkoutPlanClick: (Long) -> Unit = {},
     onSettings: () -> Unit = {},
 ) {
     var selected by rememberSaveable { mutableStateOf(HomeTab.Exercises) }
@@ -58,6 +62,10 @@ fun HomeScreen(
         when (selected) {
             HomeTab.Exercises -> ExercisesScreen(
                 onExerciseClick = onExerciseClick,
+                modifier = contentModifier,
+            )
+            HomeTab.Workouts -> WorkoutPlansScreen(
+                onPlanClick = onWorkoutPlanClick,
                 modifier = contentModifier,
             )
             HomeTab.Favorites -> FavoritesScreen(
