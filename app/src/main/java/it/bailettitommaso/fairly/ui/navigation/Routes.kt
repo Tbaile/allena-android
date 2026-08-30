@@ -27,5 +27,8 @@ sealed interface Route {
     data class WorkoutPlanDetail(val id: Long) : Route
 
     @Serializable
+    data class WorkoutPlayer(val planId: Long) : Route
+
+    @Serializable
     data object Settings : Route
 }

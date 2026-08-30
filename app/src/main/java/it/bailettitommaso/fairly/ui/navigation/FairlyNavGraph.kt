@@ -26,6 +26,7 @@ import it.bailettitommaso.fairly.ui.offline.ConnectivityViewModel
 import it.bailettitommaso.fairly.ui.offline.OfflineScreen
 import it.bailettitommaso.fairly.ui.settings.SettingsScreen
 import it.bailettitommaso.fairly.ui.workouts.WorkoutPlanDetailScreen
+import it.bailettitommaso.fairly.ui.workouts.WorkoutPlayerScreen
 
 @Composable
 fun FairlyNavGraph(bootViewModel: BootViewModel) {
@@ -118,7 +119,20 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(300))
             },
         ) {
-            WorkoutPlanDetailScreen(onBack = { navController.popBackStack() })
+            WorkoutPlanDetailScreen(
+                onBack = { navController.popBackStack() },
+                onStartWorkout = { id -> navController.navigate(Route.WorkoutPlayer(id)) },
+            )
+        }
+        composable<Route.WorkoutPlayer>(
+            enterTransition = {
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Up, animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = tween(300))
+            },
+        ) {
+            WorkoutPlayerScreen(onExit = { navController.popBackStack() })
         }
         composable<Route.Settings>(
             enterTransition = {

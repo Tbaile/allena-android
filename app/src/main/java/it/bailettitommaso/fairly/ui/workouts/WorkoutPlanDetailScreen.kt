@@ -35,6 +35,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.bailettitommaso.fairly.domain.model.WorkoutPlan
 import it.bailettitommaso.fairly.domain.model.WorkoutPlanItem
+import it.bailettitommaso.fairly.ui.components.FairlyButton
 import it.bailettitommaso.fairly.ui.components.OfflineCause
 import it.bailettitommaso.fairly.ui.components.OfflineState
 import it.bailettitommaso.fairly.ui.theme.FairlyTheme
@@ -42,10 +43,16 @@ import it.bailettitommaso.fairly.ui.theme.FairlyTheme
 @Composable
 fun WorkoutPlanDetailScreen(
     onBack: () -> Unit,
+    onStartWorkout: (Long) -> Unit,
     viewModel: WorkoutPlanDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    WorkoutPlanDetailContent(state = state, onBack = onBack, onRetry = viewModel::retry)
+    WorkoutPlanDetailContent(
+        state = state,
+        onBack = onBack,
+        onRetry = viewModel::retry,
+        onStartWorkout = onStartWorkout,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +61,7 @@ private fun WorkoutPlanDetailContent(
     state: WorkoutPlanDetailUiState,
     onBack: () -> Unit,
     onRetry: () -> Unit,
+    onStartWorkout: (Long) -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -75,7 +83,7 @@ private fun WorkoutPlanDetailContent(
         ) {
             when (state) {
                 WorkoutPlanDetailUiState.Loading -> CircularProgressIndicator()
-                is WorkoutPlanDetailUiState.Success -> PlanDetails(state.plan)
+                is WorkoutPlanDetailUiState.Success -> PlanDetails(state.plan, onStartWorkout)
                 WorkoutPlanDetailUiState.NotFound -> OfflineState(
                     cause = OfflineCause.NOT_FOUND,
                     modifier = Modifier.fillMaxSize(),
@@ -96,7 +104,7 @@ private fun WorkoutPlanDetailContent(
 }
 
 @Composable
-private fun PlanDetails(plan: WorkoutPlan) {
+private fun PlanDetails(plan: WorkoutPlan, onStartWorkout: (Long) -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -121,6 +129,18 @@ private fun PlanDetails(plan: WorkoutPlan) {
         items(plan.items, key = { it.id }) { item ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 PlanItemRow(item)
+            }
+        }
+
+        if (plan.items.isNotEmpty()) {
+            item {
+                FairlyButton(
+                    text = "Start workout",
+                    onClick = { onStartWorkout(plan.id) },
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth(),
+                )
             }
         }
     }
