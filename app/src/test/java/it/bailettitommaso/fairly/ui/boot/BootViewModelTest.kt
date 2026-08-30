@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -30,6 +31,32 @@ class BootViewModelTest {
 
     init {
         every { sessionManager.sessionExpired } returns MutableStateFlow(false)
+    }
+
+    @Test
+    fun `a state is routed once, so an activity recreation does not re-navigate`() = runTest {
+        coEvery { sessionRepository.bootstrap() } returns unreachable
+        val viewModel = BootViewModel(sessionRepository, sessionManager)
+        val authenticated = BootState.Authenticated(
+            User(id = 1, name = "Fairly Customer", email = "customer@fairly.app", mustChangePassword = false),
+        )
+
+        assertTrue(viewModel.shouldRoute(authenticated))
+        // The replay after a rotation carries the same state and must be ignored.
+        assertFalse(viewModel.shouldRoute(authenticated))
+        assertFalse(viewModel.shouldRoute(authenticated))
+    }
+
+    @Test
+    fun `a genuine state change still routes`() = runTest {
+        coEvery { sessionRepository.bootstrap() } returns unreachable
+        val viewModel = BootViewModel(sessionRepository, sessionManager)
+
+        assertTrue(viewModel.shouldRoute(BootState.Unauthenticated))
+        assertFalse(viewModel.shouldRoute(BootState.Unauthenticated))
+        // A session expiring after the user signed in has to reach the login screen.
+        assertTrue(viewModel.shouldRoute(BootState.Loading))
+        assertTrue(viewModel.shouldRoute(BootState.Unauthenticated))
     }
 
     @Test

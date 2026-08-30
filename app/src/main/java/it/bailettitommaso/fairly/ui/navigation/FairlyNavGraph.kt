@@ -33,9 +33,13 @@ fun FairlyNavGraph(bootViewModel: BootViewModel) {
     val navController = rememberNavController()
     val bootState by bootViewModel.state.collectAsStateWithLifecycle()
 
-    // The boot check owns the top-level routing decision.
+    // The boot check owns the top-level routing decision, but only on a genuine state change:
+    // after an activity recreation the effect replays, and re-routing would wipe the back stack.
     LaunchedEffect(bootState) {
-        when (val state = bootState) {
+        val state = bootState
+        if (!bootViewModel.shouldRoute(state)) return@LaunchedEffect
+
+        when (state) {
             BootState.Loading -> Unit
             is BootState.Authenticated -> navController.navigateReplacing(
                 if (state.user.mustChangePassword) Route.ChangePassword(forced = true) else Route.Home,

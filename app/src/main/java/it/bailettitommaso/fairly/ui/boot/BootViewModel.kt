@@ -34,9 +34,27 @@ class BootViewModel @Inject constructor(
     private val _retrying = MutableStateFlow(false)
     val retrying: StateFlow<Boolean> = _retrying.asStateFlow()
 
+    private var routedState: BootState? = null
+
     init {
         viewModelScope.launch { resolve() }
         observeSessionExpiry()
+    }
+
+    /**
+     * True only the first time the nav graph sees a given state.
+     *
+     * This ViewModel outlives the activity, so recreating it (a rotation, a system theme change)
+     * replays the routing effect with a state that has not actually changed. Acting on it again
+     * sends the user back to the start destination and clears the restored back stack, which looks
+     * like being thrown out of a screen mid-task.
+     */
+    fun shouldRoute(state: BootState): Boolean {
+        if (routedState == state) return false
+
+        routedState = state
+
+        return true
     }
 
     /** A `401` on any authenticated call funnels here via [SessionManager], routing back to login. */
