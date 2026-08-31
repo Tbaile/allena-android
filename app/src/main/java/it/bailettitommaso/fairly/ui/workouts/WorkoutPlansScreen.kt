@@ -3,6 +3,9 @@ package it.bailettitommaso.fairly.ui.workouts
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +16,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -29,6 +33,7 @@ import it.bailettitommaso.fairly.ui.theme.FairlyTheme
 @Composable
 fun WorkoutPlansScreen(
     onPlanClick: (Long) -> Unit,
+    onHistoryClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WorkoutPlansViewModel = hiltViewModel(),
 ) {
@@ -37,6 +42,7 @@ fun WorkoutPlansScreen(
         state = state,
         onPlanClick = onPlanClick,
         onRetry = viewModel::retry,
+        onHistoryClick = onHistoryClick,
         modifier = modifier,
     )
 }
@@ -46,25 +52,39 @@ private fun WorkoutPlansContent(
     state: WorkoutPlansUiState,
     onPlanClick: (Long) -> Unit,
     onRetry: () -> Unit,
+    onHistoryClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        when (state) {
-            WorkoutPlansUiState.Loading -> CircularProgressIndicator()
-            WorkoutPlansUiState.Offline -> OfflineState(
-                cause = OfflineCause.NETWORK,
-                modifier = Modifier.fillMaxSize(),
-                onRetry = onRetry,
-            )
-            WorkoutPlansUiState.Error -> OfflineState(
-                cause = OfflineCause.SERVER,
-                modifier = Modifier.fillMaxSize(),
-                onRetry = onRetry,
-            )
-            is WorkoutPlansUiState.Success -> if (state.plans.isEmpty()) {
-                EmptyPlans()
-            } else {
-                PlanList(plans = state.plans, onPlanClick = onPlanClick)
+    Column(modifier = modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 4.dp, top = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = "Your workouts", style = MaterialTheme.typography.titleMedium)
+            TextButton(onClick = onHistoryClick) { Text("Progress") }
+        }
+
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            when (state) {
+                WorkoutPlansUiState.Loading -> CircularProgressIndicator()
+                WorkoutPlansUiState.Offline -> OfflineState(
+                    cause = OfflineCause.NETWORK,
+                    modifier = Modifier.fillMaxSize(),
+                    onRetry = onRetry,
+                )
+                WorkoutPlansUiState.Error -> OfflineState(
+                    cause = OfflineCause.SERVER,
+                    modifier = Modifier.fillMaxSize(),
+                    onRetry = onRetry,
+                )
+                is WorkoutPlansUiState.Success -> if (state.plans.isEmpty()) {
+                    EmptyPlans()
+                } else {
+                    PlanList(plans = state.plans, onPlanClick = onPlanClick)
+                }
             }
         }
     }

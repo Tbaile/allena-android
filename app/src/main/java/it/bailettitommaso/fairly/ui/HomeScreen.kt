@@ -40,6 +40,7 @@ fun HomeScreen(
     onChangePassword: () -> Unit = {},
     onExerciseClick: (Long) -> Unit = {},
     onWorkoutPlanClick: (Long) -> Unit = {},
+    onWorkoutHistory: () -> Unit = {},
     onSettings: () -> Unit = {},
 ) {
     var selected by rememberSaveable { mutableStateOf(HomeTab.Exercises) }
@@ -66,6 +67,7 @@ fun HomeScreen(
             )
             HomeTab.Workouts -> WorkoutPlansScreen(
                 onPlanClick = onWorkoutPlanClick,
+                onHistoryClick = onWorkoutHistory,
                 modifier = contentModifier,
             )
             HomeTab.Favorites -> FavoritesScreen(
