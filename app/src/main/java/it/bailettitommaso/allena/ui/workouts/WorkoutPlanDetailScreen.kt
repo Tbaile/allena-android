@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -164,8 +165,7 @@ private fun PlanDetails(plan: WorkoutPlan, onStartWorkout: (Long) -> Unit) {
 @Composable
 private fun PlanItemRow(item: WorkoutPlanItem) {
     ListItem(
-        overlineContent = { Text("${item.position}") },
-        headlineContent = { Text(item.exercise.name) },
+        headlineContent = { Text("${item.position}. ${item.exercise.name}") },
         supportingContent = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
