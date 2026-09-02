@@ -138,7 +138,17 @@ fun AllenaNavGraph(bootViewModel: BootViewModel) {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = tween(300))
             },
         ) {
-            WorkoutPlayerScreen(onExit = { navController.popBackStack() })
+            WorkoutPlayerScreen(
+                onExit = { navController.popBackStack() },
+                // A finished workout belongs next to the others: land on Progress, with the
+                // schede list behind it rather than the plan the client just ran.
+                onDone = {
+                    navController.navigate(Route.WorkoutHistory) {
+                        popUpTo<Route.Home>()
+                        launchSingleTop = true
+                    }
+                },
+            )
         }
         composable<Route.WorkoutHistory>(
             enterTransition = {
