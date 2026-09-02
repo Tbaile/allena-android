@@ -14,8 +14,20 @@ private val barbell = Tag(3, "Barbell", "barbell")
 private val chest = Tag(4, "Chest", "chest")
 private val core = Tag(5, "Core", "core")
 
-private fun exercise(id: Long, name: String, description: String, tags: List<Tag>) =
-    Exercise(id = id, name = name, description = description, category = strength, videoUrl = null, tags = tags)
+private fun exercise(
+    id: Long,
+    name: String,
+    description: String,
+    tags: List<Tag>,
+    videoUrl: String? = null,
+) = Exercise(
+    id = id,
+    name = name,
+    description = description,
+    category = strength,
+    videoUrl = videoUrl,
+    tags = tags,
+)
 
 /** Mirrors the seeded "Full Body A" plan so previews match what the demo actually shows. */
 internal val previewPlan = WorkoutPlan(
@@ -45,6 +57,7 @@ internal val previewPlan = WorkoutPlan(
                 "Rest the barbell on your upper back, brace your core and sit down until your " +
                     "thighs are parallel to the floor. Drive through the heels to stand back up.",
                 listOf(legs, compound, barbell),
+                videoUrl = "https://www.youtube.com/watch?v=XfELJU1mRMg", // try it, you'll see.
             ),
         ),
         WorkoutPlanItem(
