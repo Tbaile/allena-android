@@ -27,17 +27,22 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.bailettitommaso.allena.domain.model.Exercise
 import it.bailettitommaso.allena.domain.model.WorkoutPlan
 import it.bailettitommaso.allena.domain.model.WorkoutPlanItem
 import it.bailettitommaso.allena.ui.components.AllenaButton
 import it.bailettitommaso.allena.ui.components.OfflineCause
 import it.bailettitommaso.allena.ui.components.OfflineState
+import it.bailettitommaso.allena.ui.exercises.ExerciseInfoSheet
 import it.bailettitommaso.allena.ui.theme.AllenaTheme
 
 @Composable
@@ -105,6 +110,12 @@ private fun WorkoutPlanDetailContent(
 
 @Composable
 private fun PlanDetails(plan: WorkoutPlan, onStartWorkout: (Long) -> Unit) {
+    var infoExercise by remember { mutableStateOf<Exercise?>(null) }
+
+    infoExercise?.let { exercise ->
+        ExerciseInfoSheet(exercise = exercise, onDismiss = { infoExercise = null })
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -127,7 +138,10 @@ private fun PlanDetails(plan: WorkoutPlan, onStartWorkout: (Long) -> Unit) {
         }
 
         items(plan.items, key = { it.id }) { item ->
-            Card(modifier = Modifier.fillMaxWidth()) {
+            Card(
+                onClick = { infoExercise = item.exercise },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 PlanItemRow(item)
             }
         }

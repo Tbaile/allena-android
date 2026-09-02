@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +41,7 @@ import it.bailettitommaso.allena.ui.components.AllenaButton
 import it.bailettitommaso.allena.ui.components.AllenaTextField
 import it.bailettitommaso.allena.ui.components.OfflineCause
 import it.bailettitommaso.allena.ui.components.OfflineState
+import it.bailettitommaso.allena.ui.exercises.ExerciseInfoSheet
 import it.bailettitommaso.allena.ui.theme.AllenaTheme
 
 @Composable
@@ -153,6 +155,13 @@ private fun RunningSet(
     onCompleteSet: () -> Unit,
     onSkipRest: () -> Unit,
 ) {
+    // Keyed on the item so the sheet closes by itself when rest rolls over to the next exercise.
+    var infoOpen by remember(state.item.id) { mutableStateOf(false) }
+
+    if (infoOpen) {
+        ExerciseInfoSheet(exercise = state.item.exercise, onDismiss = { infoOpen = false })
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -165,11 +174,17 @@ private fun RunningSet(
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Text(
-            text = state.item.exercise.name,
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = state.item.exercise.name,
+                style = MaterialTheme.typography.headlineMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            IconButton(onClick = { infoOpen = true }) {
+                Icon(Icons.Outlined.Info, contentDescription = "Exercise details")
+            }
+        }
         Text(
             text = "Set ${state.setNumber} of ${state.item.sets}  ·  target ${state.item.loadLabel()}",
             style = MaterialTheme.typography.bodyMedium,
