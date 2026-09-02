@@ -8,13 +8,13 @@ plugins {
 }
 
 android {
-    namespace = "it.bailettitommaso.fairly"
+    namespace = "it.bailettitommaso.allena"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "it.bailettitommaso.fairly"
+        applicationId = "it.bailettitommaso.allena"
         minSdk = 28
         targetSdk = 36
         versionCode = 1
@@ -33,7 +33,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "API_BASE_URL", "\"https://api.fairly.example/api/v1/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://api.allena.example/api/v1/\"")
         }
     }
     compileOptions {

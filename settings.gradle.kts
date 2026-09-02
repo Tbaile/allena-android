@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Fairly"
+rootProject.name = "Allena"
 include(":app")
