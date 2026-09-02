@@ -44,6 +44,6 @@ The API base URL is a `BuildConfig` field set per build type in `app/build.gradl
 | Build type | `API_BASE_URL` |
 | --- | --- |
 | debug | `http://10.0.2.2/api/v1/` (emulator loopback to the host) |
-| release | `https://api.allena.example/api/v1/` |
+| release | *not yet deployed* |
 
 Point the debug URL at your own backend if you are not running one on the host machine.
