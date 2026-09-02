@@ -361,25 +361,15 @@ private fun ProfileHeader(
 
 @Composable
 private fun ProfileNameField(value: String, onValueChange: (String) -> Unit, enabled: Boolean) {
-    Column(
+    AllenaTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = "Name",
+        enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = "Name",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        AllenaTextField(
-            value = value,
-            onValueChange = onValueChange,
-            label = "Name",
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    )
 }
 
 @Composable
