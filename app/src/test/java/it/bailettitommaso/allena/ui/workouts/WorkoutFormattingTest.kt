@@ -4,6 +4,7 @@ import it.bailettitommaso.allena.domain.model.Exercise
 import it.bailettitommaso.allena.domain.model.WorkoutPlanItem
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.time.Duration
 
 class WorkoutFormattingTest {
 
@@ -45,5 +46,36 @@ class WorkoutFormattingTest {
     fun `whole weights drop the decimal`() {
         assertEquals("60 kg", formatWeight(60.0))
         assertEquals("2.5 kg", formatWeight(2.5))
+    }
+
+    @Test
+    fun `volume is grouped for readability`() {
+        assertEquals("7,905 kg", formatVolume(7905.0))
+        assertEquals("0 kg", formatVolume(0.0))
+    }
+
+    @Test
+    fun `under an hour reads in minutes`() {
+        assertEquals("52 min", formatDuration(Duration.ofMinutes(52)))
+        assertEquals("0 min", formatDuration(Duration.ZERO))
+    }
+
+    @Test
+    fun `an hour or more reads as hours and padded minutes`() {
+        assertEquals("5h 12m", formatDuration(Duration.ofMinutes(312)))
+        assertEquals("1h 00m", formatDuration(Duration.ofMinutes(60)))
+        assertEquals("2h 05m", formatDuration(Duration.ofMinutes(125)))
+    }
+
+    @Test
+    fun `small changes keep a decimal, large ones round`() {
+        assertEquals("+4.7%", formatPercentDelta(0.047))
+        assertEquals("+46%", formatPercentDelta(0.4585))
+    }
+
+    @Test
+    fun `a drop is signed with a minus`() {
+        assertEquals("\u22123.2%", formatPercentDelta(-0.032))
+        assertEquals("+0.0%", formatPercentDelta(0.0))
     }
 }

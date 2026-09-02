@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -33,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.bailettitommaso.allena.domain.model.WorkoutSession
 import it.bailettitommaso.allena.ui.theme.AllenaTheme
 import it.bailettitommaso.allena.ui.workouts.components.VolumeChart
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -73,9 +75,13 @@ private fun WorkoutHistoryContent(state: WorkoutHistoryUiState, onBack: () -> Un
         ) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (state.sessions.isNotEmpty()) {
+                        SummaryRow(state.summary)
+                    }
                     Text(
                         text = "Weekly volume",
                         style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(top = 8.dp),
                     )
                     VolumeChart(bars = state.chart)
                     Text(
@@ -100,7 +106,7 @@ private fun WorkoutHistoryContent(state: WorkoutHistoryUiState, onBack: () -> Un
 
             items(state.sessions, key = { it.localId }) { session ->
                 Card(modifier = Modifier.fillMaxWidth()) {
-                    SessionRow(session)
+                    SessionRow(session = session, volumeDelta = state.volumeDeltas[session.localId])
                 }
             }
         }
@@ -108,31 +114,86 @@ private fun WorkoutHistoryContent(state: WorkoutHistoryUiState, onBack: () -> Un
 }
 
 @Composable
-private fun SessionRow(session: WorkoutSession) {
+private fun SummaryRow(summary: ProgressSummary, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        StatTile("Sessions", summary.sessionCount.toString(), Modifier.weight(1f))
+        StatTile("Trained", formatDuration(summary.timeTrained), Modifier.weight(1f))
+        StatTile("Weeks", "${summary.activeWeeks}/${summary.trackedWeeks}", Modifier.weight(1f))
+        StatTile("Volume", summary.volumeTrend?.let(::formatPercentDelta) ?: "—", Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
+    Card(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(text = value, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SessionRow(session: WorkoutSession, volumeDelta: Double?) {
+    val trailing: (@Composable () -> Unit)? = when {
+        session.isPending -> {
+            { AssistChip(onClick = {}, label = { Text("Not uploaded") }) }
+        }
+
+        volumeDelta != null -> {
+            {
+                Text(
+                    text = formatPercentDelta(volumeDelta),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (volumeDelta < 0.0) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
+                )
+            }
+        }
+
+        else -> null
+    }
+
     ListItem(
         overlineContent = { Text(session.startedAt.atZone(ZoneId.systemDefault()).format(SessionDateFormat)) },
         headlineContent = { Text(session.planName ?: "Workout") },
         supportingContent = { Text(session.summary()) },
-        trailingContent = if (session.isPending) {
-            { AssistChip(onClick = {}, label = { Text("Not uploaded") }) }
-        } else {
-            null
-        },
+        trailingContent = trailing,
     )
 }
 
-private fun WorkoutSession.summary(): String {
-    val sets = if (setCount == 1) "1 set" else "$setCount sets"
-    if (totalVolume <= 0.0) return sets
-
-    return "$sets · ${totalVolume.toInt()} kg"
-}
+/**
+ * Volume and time, not sets: a scheda prescribes a fixed number of sets and the player logs them
+ * all, so a set count is the same number on every row.
+ */
+private fun WorkoutSession.summary(): String = buildList {
+    if (totalVolume > 0.0) add(formatVolume(totalVolume))
+    elapsed().takeIf { !it.isZero }?.let { add(formatDuration(it)) }
+}.joinToString(" · ")
 
 private fun previewSession(
     localId: Long,
     startedAt: String,
     setCount: Int,
     volume: Double,
+    minutes: Long = 52,
     isPending: Boolean = false,
 ) = WorkoutSession(
     localId = localId,
@@ -140,27 +201,26 @@ private fun previewSession(
     planId = 1,
     planName = "Full Body A",
     startedAt = Instant.parse(startedAt),
-    completedAt = Instant.parse(startedAt),
+    completedAt = Instant.parse(startedAt).plus(Duration.ofMinutes(minutes)),
     notes = null,
     setCount = setCount,
     totalVolume = volume,
     isPending = isPending,
 )
 
+private val previewSessions = listOf(
+    previewSession(3, "2026-08-26T18:00:00Z", 20, 5600.0, minutes = 48, isPending = true),
+    previewSession(2, "2026-08-24T18:00:00Z", 20, 5200.0, minutes = 55),
+    previewSession(1, "2026-08-19T18:00:00Z", 20, 4600.0, minutes = 51),
+)
+
+private val previewChart = weeklyVolume(previewSessions, today = LocalDate.of(2026, 8, 27))
+
 private val previewState = WorkoutHistoryUiState(
-    sessions = listOf(
-        previewSession(3, "2026-08-26T18:00:00Z", 14, 2400.0, isPending = true),
-        previewSession(2, "2026-08-24T18:00:00Z", 20, 5200.0),
-        previewSession(1, "2026-08-19T18:00:00Z", 18, 4600.0),
-    ),
-    chart = weeklyVolume(
-        listOf(
-            previewSession(2, "2026-08-24T18:00:00Z", 20, 5200.0),
-            previewSession(1, "2026-08-17T18:00:00Z", 18, 4600.0),
-            previewSession(0, "2026-08-03T18:00:00Z", 16, 3800.0),
-        ),
-        today = LocalDate.of(2026, 8, 27),
-    ),
+    sessions = previewSessions,
+    chart = previewChart,
+    summary = progressSummary(previewSessions, previewChart),
+    volumeDeltas = volumeDeltas(previewSessions),
 )
 
 @Preview(showBackground = true)

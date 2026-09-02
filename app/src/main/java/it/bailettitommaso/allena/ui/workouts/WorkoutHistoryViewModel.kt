@@ -15,6 +15,8 @@ import javax.inject.Inject
 data class WorkoutHistoryUiState(
     val sessions: List<WorkoutSession> = emptyList(),
     val chart: List<WeeklyVolume> = emptyList(),
+    val summary: ProgressSummary = ProgressSummary(),
+    val volumeDeltas: Map<Long, Double> = emptyMap(),
 )
 
 @HiltViewModel
@@ -28,9 +30,13 @@ class WorkoutHistoryViewModel @Inject constructor(
      */
     val state = workoutRepository.sessions()
         .map { sessions ->
+            val chart = weeklyVolume(sessions, today = LocalDate.now())
+
             WorkoutHistoryUiState(
                 sessions = sessions,
-                chart = weeklyVolume(sessions, today = LocalDate.now()),
+                chart = chart,
+                summary = progressSummary(sessions, chart),
+                volumeDeltas = volumeDeltas(sessions),
             )
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), WorkoutHistoryUiState())

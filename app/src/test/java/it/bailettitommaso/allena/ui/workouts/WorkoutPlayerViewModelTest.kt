@@ -116,6 +116,68 @@ class WorkoutPlayerViewModelTest {
     }
 
     @Test
+    fun `skipping a set logs nothing and moves on without resting`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.skipSet()
+
+        coVerify(exactly = 0) { workoutRepository.logSet(any(), any(), any(), any(), any(), any()) }
+        val state = running(viewModel.state.value)
+        assertEquals(2, state.setNumber)
+        assertEquals("Jump Squat", state.item.exercise.name)
+        assertFalse(state.isResting)
+    }
+
+    @Test
+    fun `skipping the last set of an exercise moves to the next one`() = runTest {
+        val viewModel = viewModel()
+
+        repeat(previewPlan.items[0].sets) { viewModel.skipSet() }
+
+        val state = running(viewModel.state.value)
+        assertEquals("Barbell Back Squat", state.item.exercise.name)
+        assertEquals(1, state.setNumber)
+    }
+
+    @Test
+    fun `skipped sets are absent from the finished totals`() = runTest {
+        val viewModel = viewModel()
+        viewModel.skipSet()
+        viewModel.completeSet()
+        viewModel.skipRest()
+
+        viewModel.finishEarly()
+
+        val state = viewModel.state.value as WorkoutPlayerUiState.Finished
+        assertEquals(1, state.setCount)
+    }
+
+    @Test
+    fun `skipping cancels a rest already running`() = runTest {
+        val viewModel = viewModel()
+        viewModel.completeSet()
+        assertTrue(running(viewModel.state.value).isResting)
+
+        viewModel.skipSet()
+
+        assertFalse(running(viewModel.state.value).isResting)
+        advanceTimeBy(5_000)
+        assertNull(running(viewModel.state.value).restRemainingSeconds)
+    }
+
+    @Test
+    fun `the last set cannot be skipped, since Finish already ends the workout`() = runTest {
+        val single = previewPlan.copy(items = listOf(previewPlan.items[1].copy(sets = 1)))
+        coEvery { workoutRepository.plan(any()) } returns WorkoutPlanResult.Success(single)
+        val viewModel = viewModel()
+        assertTrue(running(viewModel.state.value).isLastSet)
+
+        viewModel.skipSet()
+
+        assertTrue(viewModel.state.value is WorkoutPlayerUiState.Running)
+    }
+
+    @Test
     fun `a timed exercise logs a duration instead of reps`() = runTest {
         coEvery { workoutRepository.plan(any()) } returns
             WorkoutPlanResult.Success(previewPlan.copy(items = listOf(previewPlan.items[3])))

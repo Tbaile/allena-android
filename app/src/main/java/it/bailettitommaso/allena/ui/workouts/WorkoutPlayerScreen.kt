@@ -47,6 +47,7 @@ import it.bailettitommaso.allena.ui.theme.AllenaTheme
 @Composable
 fun WorkoutPlayerScreen(
     onExit: () -> Unit,
+    onDone: () -> Unit,
     viewModel: WorkoutPlayerViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -55,6 +56,7 @@ fun WorkoutPlayerScreen(
         onEntryChange = viewModel::onEntryChange,
         onWeightChange = viewModel::onWeightChange,
         onCompleteSet = viewModel::completeSet,
+        onSkipSet = viewModel::skipSet,
         onSkipRest = viewModel::skipRest,
         onFinishEarly = viewModel::finishEarly,
         onDiscard = {
@@ -63,6 +65,7 @@ fun WorkoutPlayerScreen(
         },
         onRetry = viewModel::retry,
         onExit = onExit,
+        onDone = onDone,
     )
 }
 
@@ -73,11 +76,13 @@ private fun WorkoutPlayerContent(
     onEntryChange: (String) -> Unit,
     onWeightChange: (String) -> Unit,
     onCompleteSet: () -> Unit,
+    onSkipSet: () -> Unit,
     onSkipRest: () -> Unit,
     onFinishEarly: () -> Unit,
     onDiscard: () -> Unit,
     onRetry: () -> Unit,
     onExit: () -> Unit,
+    onDone: () -> Unit,
 ) {
     var confirmingDiscard by remember { mutableStateOf(false) }
     val running = state as? WorkoutPlayerUiState.Running
@@ -125,9 +130,10 @@ private fun WorkoutPlayerContent(
                     onEntryChange = onEntryChange,
                     onWeightChange = onWeightChange,
                     onCompleteSet = onCompleteSet,
+                    onSkipSet = onSkipSet,
                     onSkipRest = onSkipRest,
                 )
-                is WorkoutPlayerUiState.Finished -> FinishedSummary(state = state, onExit = onExit)
+                is WorkoutPlayerUiState.Finished -> FinishedSummary(state = state, onDone = onDone)
                 WorkoutPlayerUiState.NotFound -> OfflineState(
                     cause = OfflineCause.NOT_FOUND,
                     modifier = Modifier.fillMaxSize(),
@@ -153,6 +159,7 @@ private fun RunningSet(
     onEntryChange: (String) -> Unit,
     onWeightChange: (String) -> Unit,
     onCompleteSet: () -> Unit,
+    onSkipSet: () -> Unit,
     onSkipRest: () -> Unit,
 ) {
     // Keyed on the item so the sheet closes by itself when rest rolls over to the next exercise.
@@ -227,6 +234,17 @@ private fun RunningSet(
             loading = state.saving,
             modifier = Modifier.fillMaxWidth(),
         )
+
+        // On the last set there is nothing to skip to: the top bar's Finish already ends the workout.
+        if (!state.isLastSet) {
+            TextButton(
+                onClick = onSkipSet,
+                enabled = !state.saving,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Skip set")
+            }
+        }
     }
 }
 
@@ -250,7 +268,7 @@ private fun RestCountdown(remainingSeconds: Int, totalSeconds: Int, onSkip: () -
 }
 
 @Composable
-private fun FinishedSummary(state: WorkoutPlayerUiState.Finished, onExit: () -> Unit) {
+private fun FinishedSummary(state: WorkoutPlayerUiState.Finished, onDone: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -276,7 +294,7 @@ private fun FinishedSummary(state: WorkoutPlayerUiState.Finished, onExit: () -> 
         }
         AllenaButton(
             text = "Done",
-            onClick = onExit,
+            onClick = onDone,
             modifier = Modifier
                 .padding(top = 24.dp)
                 .fillMaxWidth(),
@@ -295,9 +313,6 @@ private fun DiscardDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     )
 }
 
-private fun formatVolume(volume: Double): String =
-    if (volume % 1.0 == 0.0) "${volume.toInt()} kg" else "$volume kg"
-
 private val previewRunning = WorkoutPlayerUiState.Running(
     planName = "Full Body A",
     item = previewPlan.items[1],
@@ -314,8 +329,8 @@ private fun WorkoutPlayerRunningPreview() {
     AllenaTheme {
         WorkoutPlayerContent(
             state = previewRunning,
-            onEntryChange = {}, onWeightChange = {}, onCompleteSet = {}, onSkipRest = {},
-            onFinishEarly = {}, onDiscard = {}, onRetry = {}, onExit = {},
+            onEntryChange = {}, onWeightChange = {}, onCompleteSet = {}, onSkipSet = {}, onSkipRest = {},
+            onFinishEarly = {}, onDiscard = {}, onRetry = {}, onExit = {}, onDone = {},
         )
     }
 }
@@ -326,8 +341,8 @@ private fun WorkoutPlayerRestingDarkPreview() {
     AllenaTheme {
         WorkoutPlayerContent(
             state = previewRunning.copy(restRemainingSeconds = 78),
-            onEntryChange = {}, onWeightChange = {}, onCompleteSet = {}, onSkipRest = {},
-            onFinishEarly = {}, onDiscard = {}, onRetry = {}, onExit = {},
+            onEntryChange = {}, onWeightChange = {}, onCompleteSet = {}, onSkipSet = {}, onSkipRest = {},
+            onFinishEarly = {}, onDiscard = {}, onRetry = {}, onExit = {}, onDone = {},
         )
     }
 }
@@ -338,8 +353,8 @@ private fun WorkoutPlayerTimedPreview() {
     AllenaTheme {
         WorkoutPlayerContent(
             state = previewRunning.copy(item = previewPlan.items[3], itemIndex = 3, setNumber = 3, entry = "45"),
-            onEntryChange = {}, onWeightChange = {}, onCompleteSet = {}, onSkipRest = {},
-            onFinishEarly = {}, onDiscard = {}, onRetry = {}, onExit = {},
+            onEntryChange = {}, onWeightChange = {}, onCompleteSet = {}, onSkipSet = {}, onSkipRest = {},
+            onFinishEarly = {}, onDiscard = {}, onRetry = {}, onExit = {}, onDone = {},
         )
     }
 }
@@ -350,8 +365,8 @@ private fun WorkoutPlayerFinishedPendingPreview() {
     AllenaTheme {
         WorkoutPlayerContent(
             state = WorkoutPlayerUiState.Finished(setCount = 14, totalVolume = 4820.0, pending = true),
-            onEntryChange = {}, onWeightChange = {}, onCompleteSet = {}, onSkipRest = {},
-            onFinishEarly = {}, onDiscard = {}, onRetry = {}, onExit = {},
+            onEntryChange = {}, onWeightChange = {}, onCompleteSet = {}, onSkipSet = {}, onSkipRest = {},
+            onFinishEarly = {}, onDiscard = {}, onRetry = {}, onExit = {}, onDone = {},
         )
     }
 }

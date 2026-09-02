@@ -110,6 +110,18 @@ class WorkoutPlayerViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Moves past the current set without recording it, for a set the client could not perform. No
+     * rest follows: there was no work to recover from.
+     */
+    fun skipSet() {
+        val running = _state.value as? WorkoutPlayerUiState.Running ?: return
+        if (running.saving || running.isLastSet) return
+
+        restJob?.cancel()
+        advance(running, rest = false)
+    }
+
     /** Ends the workout early, keeping whatever was logged so far. */
     fun finishEarly() {
         if (_state.value !is WorkoutPlayerUiState.Running) return
@@ -124,7 +136,7 @@ class WorkoutPlayerViewModel @Inject constructor(
         viewModelScope.launch { workoutRepository.discardSession(sessionId) }
     }
 
-    private fun advance(running: WorkoutPlayerUiState.Running) {
+    private fun advance(running: WorkoutPlayerUiState.Running, rest: Boolean = true) {
         val movingToNextExercise = running.setNumber >= running.item.sets
         val nextIndex = if (movingToNextExercise) running.itemIndex + 1 else running.itemIndex
         val nextItem = plan?.items?.getOrNull(nextIndex) ?: return
@@ -138,9 +150,10 @@ class WorkoutPlayerViewModel @Inject constructor(
             // numbers carry over; a new exercise starts from what the plan prescribes.
             entry = if (movingToNextExercise) nextItem.defaultEntry() else running.entry,
             weight = if (movingToNextExercise) nextItem.defaultWeight() else running.weight,
+            restRemainingSeconds = null,
             saving = false,
         )
-        startRest(running.item.restSeconds)
+        if (rest) startRest(running.item.restSeconds)
     }
 
     private fun startRest(seconds: Int) {
